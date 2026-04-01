@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace luxe.Server.Controllers
+namespace luxe.Server.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]

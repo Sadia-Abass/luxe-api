@@ -36,4 +36,13 @@
     </ProjectReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Application\DTOs\" />
+    <Folder Include="Application\Repositories\" />
+    <Folder Include="Domain\Entities\" />
+    <Folder Include="Infrastructure\Data\" />
+    <Folder Include="Infrastructure\Services\" />
+    <Folder Include="Utilities\" />
+  </ItemGroup>
+
 </Project>
