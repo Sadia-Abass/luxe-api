@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="luxe.client/luxe.client.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="luxe.Server/luxe.Server.csproj" />
+</Solution>

@@ -1,0 +1,6 @@
+@luxe.Server_HostAddress = http://localhost:5096
+
+GET {{luxe.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
