@@ -41,6 +41,7 @@
     <Folder Include="Application\Repositories\" />
     <Folder Include="Domain\Entities\" />
     <Folder Include="Infrastructure\Data\" />
+    <Folder Include="Infrastructure\Configurations\" />
     <Folder Include="Infrastructure\Services\" />
     <Folder Include="Utilities\" />
   </ItemGroup>
