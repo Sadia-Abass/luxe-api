@@ -31,6 +31,11 @@ namespace luxe.Server.Domain.Entities
         public DateTime LastUpdated { get; set; }
         public DateTime LastLoginedInDate { get; set; }
         public bool IsActive { get; set; }
+
+        public virtual ICollection<AppUserClaim>? Claims { get; set; }
+        public virtual ICollection<AppUserLogin>? Logins { get; set; }
+        public virtual ICollection<AppUserToken>? Tokens { get; set; }
+        public virtual ICollection<AppUserRole>? UserRoles { get; set; }
     }
 
     public class AppRole : IdentityRole<Guid>
@@ -39,5 +44,46 @@ namespace luxe.Server.Domain.Entities
         public DateTime DateCreated { get; set; }
         public DateTime LastUpdated { get; set; }
         public bool IsActive { get; set; }
+
+        public virtual ICollection<AppUserRole>? UserRoles { get; set; }
+        public virtual ICollection<AppRoleClaim>? RoleClaims { get; set; }
+    }
+
+    public class AppUserRole : IdentityUserRole<Guid>
+    {
+        public DateTime DateAssigned { get; set; }
+        public DateTime LastUpdated { get; set; }
+
+        public virtual AppUser? User { get; set; }
+        public virtual AppRole? Role { get; set; }
+    }
+
+    public class AppUserClaim : IdentityUserClaim<Guid>
+    {
+        public DateTime DateCreated { get; set; }
+        public DateTime LastUpdated { get; set; }
+
+        public virtual AppUser? User { get; set; }
+    }
+
+    public class AppUserLogin : IdentityUserLogin<Guid>
+    {
+        public DateTime DateCreated { get; set; }
+        public DateTime LastUpdated { get; set; }
+        public virtual AppUser? User { get; set; }
+    }
+
+    public class AppRoleClaim : IdentityRoleClaim<Guid>
+    {
+        public DateTime DateCreated { get; set; }
+        public DateTime LastUpdated { get; set; }
+        public virtual AppRole? Role { get; set; }
+    }
+
+    public class AppUserToken : IdentityUserToken<Guid>
+    {
+        public DateTime DateCreated { get; set; }
+        public DateTime LastUpdated { get; set; }
+        public virtual AppUser? User { get; set; }
     }
 }
