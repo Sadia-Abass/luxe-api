@@ -49,7 +49,7 @@ namespace luxe.Server.Domain.Entities
         public virtual ICollection<AppRoleClaim>? RoleClaims { get; set; }
     }
 
-    public class AppUserRole : IdentityUserRole<Guid>
+    public class AppUserRole : IdentityUserRole<string>
     {
         public DateTime DateAssigned { get; set; }
         public DateTime LastUpdated { get; set; }
@@ -58,7 +58,7 @@ namespace luxe.Server.Domain.Entities
         public virtual AppRole? Role { get; set; }
     }
 
-    public class AppUserClaim : IdentityUserClaim<Guid>
+    public class AppUserClaim : IdentityUserClaim<string>
     {
         public DateTime DateCreated { get; set; }
         public DateTime LastUpdated { get; set; }
@@ -66,21 +66,21 @@ namespace luxe.Server.Domain.Entities
         public virtual AppUser? User { get; set; }
     }
 
-    public class AppUserLogin : IdentityUserLogin<Guid>
+    public class AppUserLogin : IdentityUserLogin<string>
     {
         public DateTime DateCreated { get; set; }
         public DateTime LastUpdated { get; set; }
         public virtual AppUser? User { get; set; }
     }
 
-    public class AppRoleClaim : IdentityRoleClaim<Guid>
+    public class AppRoleClaim : IdentityRoleClaim<string>
     {
         public DateTime DateCreated { get; set; }
         public DateTime LastUpdated { get; set; }
         public virtual AppRole? Role { get; set; }
     }
 
-    public class AppUserToken : IdentityUserToken<Guid>
+    public class AppUserToken : IdentityUserToken<string>
     {
         public DateTime DateCreated { get; set; }
         public DateTime LastUpdated { get; set; }

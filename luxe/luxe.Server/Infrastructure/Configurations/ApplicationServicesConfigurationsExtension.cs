@@ -1,6 +1,6 @@
-﻿using luxe.Server.Infrastructure.Data;
+﻿using luxe.Server.Domain.Entities;
+using luxe.Server.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-
 namespace luxe.Server.Infrastructure.Configurations
 {
     public static class ApplicationServicesConfigurationsExtension
@@ -16,8 +16,17 @@ namespace luxe.Server.Infrastructure.Configurations
             {
                 options.UseSqlServer(connectionString);
             });
-            
-                
+
+            services.AddIdentity<AppUser, AppRole>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 8;
+            });
+
+
             return services;
         }
     }
