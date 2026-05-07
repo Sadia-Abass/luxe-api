@@ -41,7 +41,7 @@ namespace luxe.Server.Infrastructure.Configurations
 
 
             var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
-            if(jwtSettings != null || string.IsNullOrEmpty(jwtSettings.SecretKey))
+            if(jwtSettings == null || string.IsNullOrEmpty(jwtSettings.SecretKey))
             {
                 throw new InvalidOperationException("jwt secret key is not configured properly");
             }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace luxe.Server.Domain.Entities
 {
-    public class AppUser : IdentityUser<Guid>
+    public class AppUser : IdentityUser
     {
         [PersonalData]
         [StringLength(100)]
@@ -27,6 +27,8 @@ namespace luxe.Server.Domain.Entities
         [Display(Name = "Profile Picture URL")]
         public string ImageUrl { get; set; } = string.Empty;
 
+        public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
         public DateTime Datejoined { get; set; }
         public DateTime LastUpdated { get; set; }
         public DateTime LastLoginedInDate { get; set; }
@@ -38,7 +40,7 @@ namespace luxe.Server.Domain.Entities
         public virtual ICollection<AppUserRole>? UserRoles { get; set; }
     }
 
-    public class AppRole : IdentityRole<Guid>
+    public class AppRole : IdentityRole
     {
         public string Description { get; set; } = string.Empty;
         public DateTime DateCreated { get; set; }

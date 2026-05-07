@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace luxe.Server.Infrastructure.Data
 {
-    public class AppDbContext : IdentityDbContext<AppUser, AppRole, Guid>
+    public class AppDbContext : IdentityDbContext<AppUser, AppRole, string, AppUserClaim, AppUserRole, AppUserLogin,
+        AppRoleClaim, AppUserToken>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
