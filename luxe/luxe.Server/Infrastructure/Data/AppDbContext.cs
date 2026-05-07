@@ -10,6 +10,8 @@ namespace luxe.Server.Infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
         // Configuring model properties and relationships
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
