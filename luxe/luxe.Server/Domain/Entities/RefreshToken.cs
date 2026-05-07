@@ -3,7 +3,7 @@
     public class RefreshToken
     {
         public int Id { get; set; }
-        public string Token { get; set; } = string.Empty;
+        public string? Token { get; set; } = string.Empty;
         public DateTime Expires { get; set; }
         public DateTime CreatedDate { get; set; }
         public string? CreatedByIp { get; set; }
