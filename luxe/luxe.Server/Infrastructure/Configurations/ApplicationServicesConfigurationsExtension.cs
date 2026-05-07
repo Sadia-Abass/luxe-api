@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using luxe.Server.Application.Services;
+using luxe.Server.Infrastructure.Services;
+using luxe.Server.Application.Repositories;
+using luxe.Server.Infrastructure.Repositories;
 
 namespace luxe.Server.Infrastructure.Configurations
 {
@@ -33,7 +37,7 @@ namespace luxe.Server.Infrastructure.Configurations
                 options.User.RequireUniqueEmail = true;
                 options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 
-                options.SignIn.RequireConfirmedEmail = true;
+                options.SignIn.RequireConfirmedEmail = false;
                 options.SignIn.RequireConfirmedPhoneNumber = false;
             }).AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders()
@@ -72,6 +76,11 @@ namespace luxe.Server.Infrastructure.Configurations
                     NameClaimType = ClaimTypes.Name
                 };
             });
+
+            services.AddScoped<IFileUploaderService, FileUploaderService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+
             services.AddAuthorization();
 
             return services;

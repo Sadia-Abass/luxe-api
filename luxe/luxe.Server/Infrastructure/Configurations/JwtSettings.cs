@@ -6,6 +6,6 @@
         public string Issuer { get; set; } = string.Empty;
         public string Audience { get; set; } = string.Empty;
         public int MinutesToExpiration { get; set; }
-        public int RefreshTokenExpirationDays { get; set; }
+        public double RefreshTokenExpirationDays { get; set; }
     }
 }
