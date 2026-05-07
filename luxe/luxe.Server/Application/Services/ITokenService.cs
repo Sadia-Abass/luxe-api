@@ -7,7 +7,7 @@ namespace luxe.Server.Application.Services
     public interface ITokenService
     {
         // Task<ApiResponse<>> RegisterAsync(RegistrationRequestDTO registrationRequestDTO);
-        Task<string> CreateAccessTokenAsync(AppUser user, IList<string> roles);
-        Task<RefreshToken> CreateRefreshToken(string ipAddress);   
+        string CreateAccessTokenAsync(AppUser user, IList<string> roles);
+        RefreshToken CreateRefreshToken(string ipAddress);   
     }
 }

@@ -18,7 +18,7 @@ namespace luxe.Server.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public Task<string> CreateAccessTokenAsync(AppUser user, IList<string> roles)
+        public string CreateAccessTokenAsync(AppUser user, IList<string> roles)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings").Get<JwtSettings>();
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey));
@@ -48,22 +48,23 @@ namespace luxe.Server.Infrastructure.Services
             //var tokenString = tokenHandler.WriteToken(token);
             //return Task.FromResult(tokenString);
 
-            return Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public Task<RefreshToken> CreateRefreshToken(string ipAddress)
+        public RefreshToken CreateRefreshToken(string ipAddress)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings").Get<JwtSettings>();
             var randomBytes = new byte[64];
             using var random = RandomNumberGenerator.Create();
+            random.GetBytes(randomBytes);
 
-            return Task.FromResult(new RefreshToken
+            return new RefreshToken
             {
                 Token = Convert.ToBase64String(randomBytes),
-                Expires = DateTime.UtcNow.AddDays(jwtSettings.RefreshTokenExpirationDays),
+                Expires = DateTime.UtcNow.AddDays((double)jwtSettings!.RefreshTokenExpirationDays),
                 CreatedDate = DateTime.UtcNow,
                 CreatedByIp = ipAddress
-            });
+            };
         }
     }
 }
