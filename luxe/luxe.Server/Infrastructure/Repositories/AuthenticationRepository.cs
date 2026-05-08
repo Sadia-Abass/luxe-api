@@ -14,49 +14,82 @@ namespace luxe.Server.Infrastructure.Repositories
         private readonly AppDbContext _appDbContext;
         private readonly UserManager<AppUser> _userManager;
         private readonly ITokenService _tokenService;
-        private readonly HttpContext httpContext;
+        private readonly IFileUploaderService _fileUploaderService;
+        private readonly HttpContext _httpContext;
 
-        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IHttpContextAccessor httpContextAccessor)
+        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IFileUploaderService fileUploaderService, IHttpContextAccessor httpContextAccessor)
         {
             _appDbContext = appDbContext;
             _userManager = userManager;
-            httpContext = httpContextAccessor.HttpContext;
+            _httpContext = httpContextAccessor.HttpContext;
             _tokenService = tokenService;
+            _fileUploaderService = fileUploaderService;
         }
 
-        public async Task<ApiResponse<AppUser>> RegisterAsync(RegistrationRequestDTO registerRequestDto)
+        public async Task<ApiResponse<TokenResponseDTO>> RegisterAsync(RegistrationRequestDTO registerRequestDto)
         {
-            var user = new AppUser
+            try
             {
-                FirstName = registerRequestDto.FirstName,
-                LastName = registerRequestDto.LastName,
-                Email = registerRequestDto.Email,
-                UserName = registerRequestDto.Email,
-                Datejoined = DateTime.UtcNow,
-                LastUpdated = DateTime.UtcNow,
-                LastLoginedInDate = DateTime.UtcNow,
-                IsActive = true
-            };
-
-            var result = await _userManager.CreateAsync(user, registerRequestDto.Password);
-            if (!result.Succeeded)
-            {
-                return new ApiResponse<AppUser>
+                var existingUser = await _userManager.FindByEmailAsync(registerRequestDto.Email);
+                if (existingUser != null)
                 {
-                    StatusCode = System.Net.HttpStatusCode.BadRequest,
-                    IsSuccess = false,
-                    ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                    return new ApiResponse<TokenResponseDTO>
+                    {
+                        StatusCode = System.Net.HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "Email is already in use." },
+                        Data = null
+                    };
+                }
+
+                var imageUrl = await _fileUploaderService.UploadFileAsync(registerRequestDto.File, "profile-images");
+
+                var user = new AppUser
+                {
+                    FirstName = registerRequestDto.FirstName,
+                    LastName = registerRequestDto.LastName,
+                    Email = registerRequestDto.Email,
+                    UserName = registerRequestDto.Email,
+                    ImageUrl = imageUrl.SecureUrl.ToString(),
+                    Datejoined = DateTime.UtcNow,
+                    IsActive = true
+                };
+
+                var result = await _userManager.CreateAsync(user, registerRequestDto.Password);
+                if (!result.Succeeded)
+                {
+                    return new ApiResponse<TokenResponseDTO>
+                    {
+                        StatusCode = System.Net.HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                        Data = null
+                    };
+                }
+
+                await _userManager.AddToRoleAsync(user, "Customer");
+
+                var tokenResponse = _tokenService.CreateAccessTokenAsync(user, new List<string> { "Customer" });
+
+                return new ApiResponse<TokenResponseDTO>
+                {
+                    StatusCode = System.Net.HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { "User registered successfully." },
                     Data = null
                 };
             }
-
-            return new ApiResponse<AppUser>
+            catch (Exception ex) 
             {
-                StatusCode = System.Net.HttpStatusCode.OK,
-                IsSuccess = true,
-                ErrorMessages = new List<string> { "User registered successfully." },
-                Data = user
-            };
+                return new ApiResponse<TokenResponseDTO>
+                {
+                    StatusCode = System.Net.HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred during registration.", ex.Message },
+                    Data = null
+                };
+            }
+            
         }
 
         public async Task<ApiResponse<TokenResponseDTO>> LoginAsync(LoginRequestDTO loginRequestDto)
@@ -182,12 +215,12 @@ namespace luxe.Server.Infrastructure.Repositories
 
         private string GetIpAddress()
         {
-            if(httpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
+            if(_httpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
             {
-                return httpContext.Request.Headers["X-Forwarded-For"].ToString();
+                return _httpContext.Request.Headers["X-Forwarded-For"].ToString();
             }
 
-            return httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            return _httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
         }
     }
 }

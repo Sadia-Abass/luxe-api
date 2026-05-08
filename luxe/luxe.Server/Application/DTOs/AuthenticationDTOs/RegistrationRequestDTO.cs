@@ -19,5 +19,7 @@ namespace luxe.Server.Application.DTOs.AuthenticationDTOs
         [Required(ErrorMessage = "Password is required.")]
         [StringLength(100, MinimumLength = 8, ErrorMessage = "Password must be at least 8 characters long.")]
         public string? Password { get; set; }
+
+        public IFormFile File { get; set; } = null!;
     }
 }

@@ -21,7 +21,8 @@ namespace luxe.Server.API.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateRole([FromBody] CreateRoleDTO createRoleDTO)
         {
-            var result = await _roleRepository.CreateRoleAsync(createRoleDTO.RoleName);
+            //string roleName = createRoleDTO.RoleName.Trim();
+            var result = await _roleRepository.CreateRoleAsync(createRoleDTO);
             if (!result.IsSuccess)
             {
                 return StatusCode((int)result.StatusCode, new { success = false, errors = result.ErrorMessages });

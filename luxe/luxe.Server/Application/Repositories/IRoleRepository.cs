@@ -6,7 +6,7 @@ namespace luxe.Server.Application.Repositories
 {
     public interface IRoleRepository
     {
-        Task<ApiResponse<RoleDTO>> CreateRoleAsync(string name);
+        Task<ApiResponse<RoleDTO>> CreateRoleAsync(CreateRoleDTO createRoleDTO);
         Task<ApiResponse<RoleDTO>> AssignRoleAsync(AssignRoleDTO assignRoleDTO); 
     }
 }
