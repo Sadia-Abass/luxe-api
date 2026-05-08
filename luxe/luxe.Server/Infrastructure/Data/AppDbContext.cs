@@ -93,5 +93,4 @@ namespace luxe.Server.Infrastructure.Data
         }
     }
 
-
 }

@@ -19,6 +19,7 @@ namespace luxe.Server.Infrastructure.Services
             );
 
             _cloudinary = new Cloudinary(account);
+            _cloudinary.Api.Secure = true;
         }
 
 
@@ -33,7 +34,7 @@ namespace luxe.Server.Infrastructure.Services
                 var uploadParam = new ImageUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
-                    Folder = $"luxe/{folder}",
+                    Folder = $"Luxe/{folder}",
                     Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face"),
                     
                 }; 

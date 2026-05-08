@@ -12,8 +12,8 @@ using luxe.Server.Infrastructure.Data;
 namespace luxe.Server.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260507131906_InitalCreate")]
-    partial class InitalCreate
+    [Migration("20260508125836_UpdatedSeedData")]
+    partial class UpdatedSeedData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,6 +64,63 @@ namespace luxe.Server.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("Roles", "dbo");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "9476edc9-5d95-42cf-9b0a-8ec50d824be2",
+                            ConcurrencyStamp = "da2c94b7-d5e3-4b0c-a1fe-0258fa910238",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Super Admin",
+                            NormalizedName = "SUPER ADMIN"
+                        },
+                        new
+                        {
+                            Id = "10f92425-83da-4029-94a8-4ed9b21752cd",
+                            ConcurrencyStamp = "46c79246-6a27-4cbd-8e88-fb9796723a38",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = "d54e9c02-9d71-4a46-9a4f-d246708092a8",
+                            ConcurrencyStamp = "f2567263-112d-4d33-bc1f-2da9767f2091",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Manager",
+                            NormalizedName = "MANAGER"
+                        },
+                        new
+                        {
+                            Id = "4a2e9e8c-0fb4-4882-b86f-4a7acd146522",
+                            ConcurrencyStamp = "20c96079-5887-4476-9317-ce73d2836b0c",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Customer Service",
+                            NormalizedName = "CUSTOMER SERVICE"
+                        },
+                        new
+                        {
+                            Id = "11bc160c-e32d-421e-9a08-76736c316dab",
+                            ConcurrencyStamp = "e7bda19d-be83-4511-b6ed-1c228be6371b",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Customer",
+                            NormalizedName = "CUSTOMER"
+                        });
                 });
 
             modelBuilder.Entity("luxe.Server.Domain.Entities.AppRoleClaim", b =>
@@ -296,6 +353,46 @@ namespace luxe.Server.Infrastructure.Migrations
                     b.ToTable("UserTokens", "dbo");
                 });
 
+            modelBuilder.Entity("luxe.Server.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedByIp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReplacedByToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RevokedByIp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("RevokedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens", "dbo");
+                });
+
             modelBuilder.Entity("luxe.Server.Domain.Entities.AppRoleClaim", b =>
                 {
                     b.HasOne("luxe.Server.Domain.Entities.AppRole", "Role")
@@ -359,6 +456,17 @@ namespace luxe.Server.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("luxe.Server.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("luxe.Server.Domain.Entities.AppUser", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("luxe.Server.Domain.Entities.AppRole", b =>
                 {
                     b.Navigation("RoleClaims");
@@ -371,6 +479,8 @@ namespace luxe.Server.Infrastructure.Migrations
                     b.Navigation("Claims");
 
                     b.Navigation("Logins");
+
+                    b.Navigation("RefreshTokens");
 
                     b.Navigation("Tokens");
 

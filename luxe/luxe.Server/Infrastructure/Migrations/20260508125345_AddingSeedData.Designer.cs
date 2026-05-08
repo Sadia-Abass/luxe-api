@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using luxe.Server.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using luxe.Server.Infrastructure.Data;
 namespace luxe.Server.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508125345_AddingSeedData")]
+    partial class AddingSeedData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,8 +68,8 @@ namespace luxe.Server.Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "9476edc9-5d95-42cf-9b0a-8ec50d824be2",
-                            ConcurrencyStamp = "da2c94b7-d5e3-4b0c-a1fe-0258fa910238",
+                            Id = "bdd6f1e5-f61c-4627-9db5-249731433f67",
+                            ConcurrencyStamp = "37287c99-a424-447c-b878-a56079b63e82",
                             DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "",
                             IsActive = true,
@@ -76,8 +79,8 @@ namespace luxe.Server.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = "10f92425-83da-4029-94a8-4ed9b21752cd",
-                            ConcurrencyStamp = "46c79246-6a27-4cbd-8e88-fb9796723a38",
+                            Id = "4ab9a85f-46cb-489b-8f16-88706486fb71",
+                            ConcurrencyStamp = "8e63e268-2b81-44fe-b1b6-e4c427b6f4f6",
                             DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "",
                             IsActive = true,
@@ -87,8 +90,8 @@ namespace luxe.Server.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = "d54e9c02-9d71-4a46-9a4f-d246708092a8",
-                            ConcurrencyStamp = "f2567263-112d-4d33-bc1f-2da9767f2091",
+                            Id = "1d840a30-6f70-47b4-b065-e2ab55dd440e",
+                            ConcurrencyStamp = "15f65fb7-388f-4b55-81d9-8c6f9d7053f3",
                             DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "",
                             IsActive = true,
@@ -98,8 +101,8 @@ namespace luxe.Server.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = "4a2e9e8c-0fb4-4882-b86f-4a7acd146522",
-                            ConcurrencyStamp = "20c96079-5887-4476-9317-ce73d2836b0c",
+                            Id = "033d781c-9def-4b3f-a8eb-b57e82488b09",
+                            ConcurrencyStamp = "c72ecc40-2878-4fd4-b889-a6a08c42b01f",
                             DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "",
                             IsActive = true,
@@ -109,8 +112,8 @@ namespace luxe.Server.Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = "11bc160c-e32d-421e-9a08-76736c316dab",
-                            ConcurrencyStamp = "e7bda19d-be83-4511-b6ed-1c228be6371b",
+                            Id = "051d3bd0-0657-4fcf-aaf1-cb70a9031e22",
+                            ConcurrencyStamp = "58f1a09a-5db1-4a95-a159-1afdd6275ea8",
                             DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "",
                             IsActive = true,

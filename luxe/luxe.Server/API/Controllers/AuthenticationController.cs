@@ -17,7 +17,7 @@ namespace luxe.Server.API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegistrationRequestDTO registerRequestDto)
+        public async Task<IActionResult> Register([FromForm] RegistrationRequestDTO registerRequestDto)
         {
             var result = await _authenticationRepository.RegisterAsync(registerRequestDto);
             if (!result.IsSuccess)

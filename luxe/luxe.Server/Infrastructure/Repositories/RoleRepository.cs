@@ -20,18 +20,18 @@ namespace luxe.Server.Infrastructure.Repositories
         public async Task<ApiResponse<RoleDTO>> CreateRoleAsync(CreateRoleDTO createRoleDTO)
         {
             var roleName = createRoleDTO.RoleName;
-            if (await _roleManager.RoleExistsAsync(roleName))
+            if (await _roleManager.RoleExistsAsync(createRoleDTO.RoleName))
             {
                 return new ApiResponse<RoleDTO>
                 {
                     StatusCode = System.Net.HttpStatusCode.BadRequest,
                     IsSuccess = false,
-                    ErrorMessages = new List<string> { $"{roleName} already exists." },
+                    ErrorMessages = new List<string> { $"{createRoleDTO.RoleName} already exists." },
                     Data = null
                 };
             }
 
-            var result = await _roleManager.CreateAsync(new AppRole { Name = roleName });
+            var result = await _roleManager.CreateAsync(new AppRole { Name = createRoleDTO.RoleName, Description = createRoleDTO.Description, DateCreated = DateTime.UtcNow, IsActive = createRoleDTO.IsActive });
             if (!result.Succeeded)
             {
                 return new ApiResponse<RoleDTO>
@@ -47,8 +47,8 @@ namespace luxe.Server.Infrastructure.Repositories
             {
                 StatusCode = System.Net.HttpStatusCode.OK,
                 IsSuccess = true,
-                ErrorMessages = new List<string> { $"Role {roleName} created successfully." },
-                Data = new RoleDTO { Name = roleName }
+                ErrorMessages = new List<string> { $"Role {createRoleDTO.RoleName} created successfully." },
+                Data = new RoleDTO { Name = createRoleDTO.RoleName, Description = createRoleDTO.Description, IsActive = createRoleDTO.IsActive }
             };
         }
 

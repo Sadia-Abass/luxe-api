@@ -12,8 +12,8 @@ using luxe.Server.Infrastructure.Data;
 namespace luxe.Server.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260508105218_UpdatedAppUser")]
-    partial class UpdatedAppUser
+    [Migration("20260508124532_Update")]
+    partial class Update
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

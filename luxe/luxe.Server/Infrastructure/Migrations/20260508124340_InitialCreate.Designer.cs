@@ -12,8 +12,8 @@ using luxe.Server.Infrastructure.Data;
 namespace luxe.Server.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260507142707_AddRefreshToken")]
-    partial class AddRefreshToken
+    [Migration("20260508124340_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,6 +64,63 @@ namespace luxe.Server.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("Roles", "dbo");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "30fb5645-a2c4-4f35-965a-681d7cd6f50f",
+                            ConcurrencyStamp = "6639c7d0-4f4b-4dad-9f98-f64616b42b9b",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Super Admin",
+                            NormalizedName = "SUPER ADMIN"
+                        },
+                        new
+                        {
+                            Id = "41a3eda1-baf7-47b1-b38b-9b4171757b1c",
+                            ConcurrencyStamp = "5c64eec5-c295-4cdd-8b11-7eb43eae5fad",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = "926dff05-c6b4-477c-ae5f-eaf194fa0a34",
+                            ConcurrencyStamp = "fc6c8bfb-b2f2-461e-ab02-dba273d67580",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Manager",
+                            NormalizedName = "MANAGER"
+                        },
+                        new
+                        {
+                            Id = "daae7cec-db20-4ccd-8e23-e7ae0feb9249",
+                            ConcurrencyStamp = "04159f8a-6527-4bfd-827e-7f857db9aefc",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Customer Service",
+                            NormalizedName = "CUSTOMER SERVICE"
+                        },
+                        new
+                        {
+                            Id = "b2ca850a-d75b-4742-821c-c7012ea7f44e",
+                            ConcurrencyStamp = "ed48c4ad-3c61-4a92-8841-0ed51c60d71c",
+                            DateCreated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "",
+                            IsActive = true,
+                            LastUpdated = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Customer",
+                            NormalizedName = "CUSTOMER"
+                        });
                 });
 
             modelBuilder.Entity("luxe.Server.Domain.Entities.AppRoleClaim", b =>
@@ -323,7 +380,6 @@ namespace luxe.Server.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Token")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")

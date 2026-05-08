@@ -79,7 +79,9 @@ namespace luxe.Server.Infrastructure.Configurations
 
             services.AddScoped<IFileUploaderService, FileUploaderService>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
 
             services.AddAuthorization();
 
