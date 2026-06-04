@@ -11,6 +11,9 @@ namespace luxe.Server.Infrastructure.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Category> Category { get; set; }
+        public DbSet<Subcategory> Subcategory { get; set; }
+
 
         // Configuring model properties and relationships
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -90,6 +93,18 @@ namespace luxe.Server.Infrastructure.Data
             {
                 e.ToTable(name: "UserRoles");
             });
+
+           modelBuilder.Entity<Category>(c => c.HasMany(c => c.Subcategory)
+                .WithOne(s => s.Category)
+                .HasForeignKey(s => s.CategoryId)
+                .IsRequired());
+
+           modelBuilder.Entity<Subcategory>(s => s.HasOne(s => s.Category)
+                .WithMany(c => c.Subcategory)
+                .HasForeignKey(s => s.CategoryId)
+                .IsRequired());
+
+            modelBuilder.Seed();
         }
     }
 
