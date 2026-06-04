@@ -7,6 +7,6 @@ namespace luxe.Server.Domain.Entities
         [Key]
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public ICollection<Subcategory> Subcategories { get; set; } = new List<Subcategory>();
+        public ICollection<Subcategory> Subcategory { get; set; } = new List<Subcategory>();
     }
 }
