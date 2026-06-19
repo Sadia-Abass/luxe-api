@@ -114,6 +114,7 @@ namespace luxe.Server.Infrastructure.Repositories
                 {
                     StatusCode = HttpStatusCode.Created,
                     IsSuccess = true,
+                    ErrorMessages = new List<string> { $"{createCategoryDTO.Name} created successfully." },
                     Data = new CategoryDTO
                     {
                         Id = category.Id,
