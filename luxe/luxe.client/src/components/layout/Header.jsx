@@ -3,32 +3,43 @@ import { ROUTES } from "../../util/constants";
 
 function Header() {
   return (
-    <nav class="navbar navbar-expand-lg bg-body-tertiary">
-      <div class="container-fluid">
+    <nav className="navbar navbar-expand-lg bg-body-tertiary">
+      <div className="container-fluid">
+        <NavLink className="navbar-brand" href={ROUTES.HOME}>
+          Luxe
+        </NavLink>
         <button
-          class="navbar-toggler"
+          className="navbar-toggler"
           type="button"
           data-bs-toggle="collapse"
-          data-bs-target="#navbarTogglerDemo01"
-          aria-controls="navbarTogglerDemo01"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
           aria-expanded="false"
           aria-label="Toggle navigation"
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse" id="navbarTogglerDemo01">
-          <NavLink className="navbar-brand" href="#">
-            Hidden brand
-          </NavLink>
+        <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            <li className="nav-item">
+            <li className="nav-item dropdown">
               <NavLink
-                to={ROUTES.HOME}
-                className="nav-link active"
+                to="/"
+                className="nav-link dropdown-toggle"
                 aria-current="page"
               >
-                Home
+                Shop
               </NavLink>
+              <ul className="dropdown-menu">
+                <li>
+                  <NavLink>Womens</NavLink>
+                </li>
+                <li>
+                  <NavLink>Mens</NavLink>
+                </li>
+                <li>
+                  <NavLink>Baby & Children</NavLink>
+                </li>
+              </ul>
             </li>
             <li className="nav-item">
               <NavLink to={ROUTES.LOGIN} className="nav-link">
