@@ -6,7 +6,7 @@ import AppRouter from "./routes/AppRouter";
 function App() {
   return (
     <div className="d-flex flex-column min-vh-100 bg-body">
-      <Headers />
+      <Header />
       <main>
         <AppRouter />
       </main>
@@ -22,7 +22,6 @@ function App() {
         draggable
         pauseOnHover
         theme="light"
-        transition={Bounce}
       />
     </div>
   );
