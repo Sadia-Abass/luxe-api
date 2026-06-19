@@ -21,11 +21,11 @@ jobs:
           node-version: '24'
 
       - name: Install client dependencies
-        working-directory: ./client
+        working-directory: ./luxe.client
         run: npm ci
 
       - name: Build React app
-        working-directory: ./client
+        working-directory: ./luxe.client
         run: npm run build
 
       # ---------- Backend (ASP.NET Core) ----------
