@@ -21,7 +21,7 @@ namespace luxe.Server.Infrastructure.Repositories
         {
             try
             {
-                var categoty = await _appDbContext.Category.AsNoTracking().FirstOrDefaultAsync();
+                var categoty = await _appDbContext.Category.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
 
                 if(categoty == null)
                 {
@@ -29,7 +29,8 @@ namespace luxe.Server.Infrastructure.Repositories
                     {
                         StatusCode = HttpStatusCode.NotFound,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { $"Category with id {id} not found." }
+                        ErrorMessages = new List<string> { $"Category with id {id} not found." },
+                        Data = null
                     };
                 }
 
@@ -96,7 +97,17 @@ namespace luxe.Server.Infrastructure.Repositories
                     {
                         StatusCode = HttpStatusCode.BadRequest,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { $"{createCategoryDTO.Name} already exists." }
+                        ErrorMessages = new List<string> { $"Category with the name '{createCategoryDTO.Name}' already exists." }
+                    };
+                }
+
+                if(string.IsNullOrWhiteSpace(createCategoryDTO.Name))
+                {
+                    return new ApiResponse<CategoryDTO>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "Category name cannot be empty." }
                     };
                 }
 
@@ -144,7 +155,7 @@ namespace luxe.Server.Infrastructure.Repositories
                     {
                         StatusCode = HttpStatusCode.NotFound,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { $"Category with id {updateCategoryDTO.Id} not found." }
+                        ErrorMessages = new List<string> { $"Category with id '{updateCategoryDTO.Id}' not found." }
                     };
                 }
 
@@ -154,7 +165,7 @@ namespace luxe.Server.Infrastructure.Repositories
                     {
                         StatusCode = HttpStatusCode.BadRequest,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { $"{updateCategoryDTO.Name} already exists." }
+                        ErrorMessages = new List<string> { $"Category with the name '{updateCategoryDTO.Name}' already exists." }
                     };
                 }
 
@@ -194,7 +205,7 @@ namespace luxe.Server.Infrastructure.Repositories
                     {
                         StatusCode = HttpStatusCode.NotFound,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { $"Category with id {id} not found." }
+                        ErrorMessages = new List<string> { $"Category with id '{id}' not found." }
                     };
                 }
 
@@ -205,7 +216,7 @@ namespace luxe.Server.Infrastructure.Repositories
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSuccess = true,
-                    ErrorMessages = new List<string> { $"Category with id {id} has been deleted successfully." }
+                    ErrorMessages = new List<string> { $"Category with id '{id}' has been deleted successfully." }
                 };
             }
             catch (Exception ex)
