@@ -172,9 +172,60 @@ namespace luxe.Server.Infrastructure.Repositories
         }
 
 
-        public Task<ApiResponse<SubcategoryDTO>> UpdateSubcategoryAsync(UpdateSubcategoryDTO updateSubcategoryDTO)
+        public async Task<ApiResponse<SubcategoryDTO>> UpdateSubcategoryAsync(UpdateSubcategoryDTO updateSubcategoryDTO)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var subcategory = await _appDbContext.Subcategory.FindAsync(updateSubcategoryDTO.Id);
+                if(subcategory == null)
+                {
+                    return new ApiResponse<SubcategoryDTO>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { $"Subcategory with ID {updateSubcategoryDTO.Id} not found." },
+                        Data = null
+                    };
+                }
+
+                if(await _appDbContext.Subcategory.AnyAsync(s => s.Name.ToLower() == updateSubcategoryDTO.Name.ToLower() && s.Id != updateSubcategoryDTO.Id))
+                {
+                    return new ApiResponse<SubcategoryDTO>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { $"A subcategory with the name '{updateSubcategoryDTO.Name}' already exists." },
+                        Data = null
+                    };
+                }
+
+                subcategory.Name = updateSubcategoryDTO.Name;
+                subcategory.CategoryId = updateSubcategoryDTO.CategoryId;
+                await _appDbContext.SaveChangesAsync();
+
+                return new ApiResponse<SubcategoryDTO>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { $"Subcategory with ID {updateSubcategoryDTO.Id} updated successfully." },
+                    Data = new SubcategoryDTO
+                    {
+                        Id = subcategory.Id,
+                        Name = subcategory.Name,
+                        CategoryId = subcategory.CategoryId
+                    }
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<SubcategoryDTO>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred while updating the subcategory." },
+                    Data = null
+                };
+            }
         }
 
         public Task<ApiResponse<bool>> DeleteSubcategoryAsync(int id)
