@@ -228,9 +228,45 @@ namespace luxe.Server.Infrastructure.Repositories
             }
         }
 
-        public Task<ApiResponse<bool>> DeleteSubcategoryAsync(int id)
+        public async Task<ApiResponse<bool>> DeleteSubcategoryAsync(int id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var subcategory = await _appDbContext.Subcategory
+                    .Include(s => s.Category)
+                    .FirstOrDefaultAsync(s => s.Id == id);
+
+                if(subcategory == null)
+                {
+                    return new ApiResponse<bool>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { $"Subcategory with ID {id} not found." }
+                    };
+                }
+
+                subcategory.IsDeleted = true;
+                await _appDbContext.SaveChangesAsync();
+
+                return new ApiResponse<bool>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { $"Subcategory with ID {id} deleted successfully." },
+                    Data = true
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<bool>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred while deleting the subcategory." },
+                    Data = false
+                };
+            }
         }
     }
 }
