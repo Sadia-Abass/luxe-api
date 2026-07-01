@@ -2,6 +2,7 @@
 using luxe.Server.Application.DTOs.Category;
 using luxe.Server.Application.DTOs.Subcategory;
 using luxe.Server.Application.Repositories;
+using luxe.Server.Domain.Entities;
 using luxe.Server.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
@@ -108,9 +109,66 @@ namespace luxe.Server.Infrastructure.Repositories
             }
         }
 
-        public Task<ApiResponse<SubcategoryDTO>> CreateSubcategoryAsync(CreateSubcategoryDTO createSubcategoryDTO)
+        public async Task<ApiResponse<SubcategoryDTO>> CreateSubcategoryAsync(CreateSubcategoryDTO createSubcategoryDTO)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if(await _appDbContext.Subcategory.AnyAsync(s => s.Name.ToLower() == createSubcategoryDTO.Name.ToLower()))
+                {
+                    return new ApiResponse<SubcategoryDTO>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { $"A subcategory with the name '{createSubcategoryDTO.Name}' already exists." },
+                        Data = null
+                    };
+                }
+
+                if(!await _appDbContext.Category.AnyAsync(c => c.Id == createSubcategoryDTO.CategoryId))
+                {
+                    return new ApiResponse<SubcategoryDTO>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { $"Category with ID {createSubcategoryDTO.CategoryId} does not exist." },
+                        Data = null
+                    };
+                }
+
+                var subcategory = new Subcategory
+                {
+                    Name = createSubcategoryDTO.Name,
+                    CategoryId = createSubcategoryDTO.CategoryId
+                };
+
+                _appDbContext.Subcategory.Add(subcategory);
+                await _appDbContext.SaveChangesAsync();
+
+                var subcategoryResponse = new SubcategoryDTO
+                {
+                    Id = subcategory.Id,
+                    Name = createSubcategoryDTO.Name,
+                    CategoryId = createSubcategoryDTO.CategoryId
+                };
+
+                return new ApiResponse<SubcategoryDTO>
+                {
+                    StatusCode = HttpStatusCode.Created,
+                    IsSuccess = true,
+                    Data = subcategoryResponse
+                };
+
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<SubcategoryDTO>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred while creating the subcategory." },
+                    Data = null
+                };
+            }
         }
 
 
