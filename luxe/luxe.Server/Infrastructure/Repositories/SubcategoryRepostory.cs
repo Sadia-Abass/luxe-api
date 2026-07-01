@@ -4,6 +4,7 @@ using luxe.Server.Application.DTOs.Subcategory;
 using luxe.Server.Application.Repositories;
 using luxe.Server.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
@@ -42,7 +43,7 @@ namespace luxe.Server.Infrastructure.Repositories
 
                 return new ApiResponse<IEnumerable<SubcategoryDTO>>
                 {
-                    StatusCode = System.Net.HttpStatusCode.OK,
+                    StatusCode = HttpStatusCode.OK,
                     IsSuccess = true,
                     Data = subcategoryList
                 };
@@ -51,7 +52,7 @@ namespace luxe.Server.Infrastructure.Repositories
             {
                 return new ApiResponse<IEnumerable<SubcategoryDTO>>
                 {
-                    StatusCode = System.Net.HttpStatusCode.InternalServerError,
+                    StatusCode = HttpStatusCode.InternalServerError,
                     IsSuccess = false,
                     ErrorMessages = new List<string> { "An error occurred while fetching subcategories." },
                     Data = null
@@ -59,9 +60,52 @@ namespace luxe.Server.Infrastructure.Repositories
             }
         }
 
-        public Task<ApiResponse<SubcategoryDTO>> GetSubcategoryByIdAsync(int id)
+        public async Task<ApiResponse<SubcategoryDTO>> GetSubcategoryByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            try 
+            {
+                var subcategory = await _appDbContext.Subcategory
+                    .AsNoTracking()
+                    .Include(s => s.Category)
+                    .FirstOrDefaultAsync(s => s.Id == id);
+
+                if (subcategory == null)
+                {
+                    return new ApiResponse<SubcategoryDTO>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { $"Subcategory with ID {id} not found." },
+                        Data = null
+                    };
+                }
+
+                var subcategoryDTO = new SubcategoryDTO
+                {
+                    Id = subcategory.Id,
+                    Name = subcategory.Name,
+                    CategoryId = subcategory.CategoryId,
+                    CategoryName = subcategory.Category.Name,
+                    IsDeleted = false
+                };
+
+                return new ApiResponse<SubcategoryDTO>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    Data = subcategoryDTO
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<SubcategoryDTO>
+                {
+                    StatusCode = System.Net.HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred while fetching the subcategory." },
+                    Data = null
+                };
+            }
         }
 
         public Task<ApiResponse<SubcategoryDTO>> CreateSubcategoryAsync(CreateSubcategoryDTO createSubcategoryDTO)
