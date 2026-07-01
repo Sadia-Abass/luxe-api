@@ -1,4 +1,5 @@
 ﻿using luxe.Server.Application.DTOs;
+using luxe.Server.Application.DTOs.Category;
 using luxe.Server.Application.DTOs.Subcategory;
 using luxe.Server.Application.Repositories;
 using luxe.Server.Infrastructure.Data;
@@ -19,7 +20,7 @@ namespace luxe.Server.Infrastructure.Repositories
         {
             try
             {
-                var subcategories = await _appDbContext.Subcategory.AsNoTracking().ToListAsync();
+                var subcategories = await _appDbContext.Subcategory.AsNoTracking().Include(s => s.Category).ToListAsync();
                 if(subcategories == null || !subcategories.Any())
                 {
                     return new ApiResponse<IEnumerable<SubcategoryDTO>>
@@ -35,6 +36,7 @@ namespace luxe.Server.Infrastructure.Repositories
                 {
                     Id = s.Id,
                     Name = s.Name,
+                    CategoryId = s.CategoryId,
                     CategoryName = s.Category.Name  
                 }).ToList();
 
