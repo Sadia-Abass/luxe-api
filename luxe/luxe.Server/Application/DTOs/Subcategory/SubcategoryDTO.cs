@@ -10,5 +10,6 @@ namespace luxe.Server.Application.DTOs.Subcategory
         public string Name { get; set; } = string.Empty;
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
+        public bool IsDeleted { get; set; }
     }
 }
