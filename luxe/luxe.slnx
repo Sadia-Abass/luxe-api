@@ -4,5 +4,5 @@
     <Deploy />
   </Project>
   <Project Path="luxe.Server/luxe.Server.csproj" />
-  <Project Path="luxe.tests/luxe.tests.csproj" Id="d3a492c8-1d41-4d9f-8f71-46ea72a43395" />
+  <Project Path="luxe.tests/luxe.tests.csproj" />
 </Solution>
