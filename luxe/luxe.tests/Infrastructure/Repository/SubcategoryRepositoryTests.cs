@@ -61,5 +61,39 @@ namespace luxe.tests.Infrastructure.Repository
             Assert.False(result.IsSuccess);
             Assert.Equal("No subcategories found.", result.ErrorMessages.FirstOrDefault());
         }
+
+        [Fact]
+        public async Task GetSubcategoryByIdAsync_ReturnsSubcategory_WhenSubcategoryExists()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            int subcategoryId = 1;
+            // Act
+            var result = await repository.GetSubcategoryByIdAsync(subcategoryId);
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(subcategoryId, result.Data.Id);
+            Assert.Equal("Face", result.Data.Name);
+            Assert.Equal("Makeup", result.Data.CategoryName);
+        }
+
+        [Fact]
+        public async Task GetSubcategoryByIdAsync_ReturnsError_WhenSubcategoryDoesNotExist()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            int subcategoryId = 999; // Non-existent subcategory ID
+            // Act
+            var result = await repository.GetSubcategoryByIdAsync(subcategoryId);
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal($"Subcategory with ID {subcategoryId} not found.", result.ErrorMessages.FirstOrDefault());
+        }
+
+
     }
 }
