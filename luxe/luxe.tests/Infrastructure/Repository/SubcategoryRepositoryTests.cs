@@ -1,4 +1,5 @@
-﻿using luxe.Server.Domain.Entities;
+﻿using luxe.Server.Application.DTOs.Subcategory;
+using luxe.Server.Domain.Entities;
 using luxe.Server.Infrastructure.Data;
 using luxe.Server.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -94,6 +95,120 @@ namespace luxe.tests.Infrastructure.Repository
             Assert.Equal($"Subcategory with ID {subcategoryId} not found.", result.ErrorMessages.FirstOrDefault());
         }
 
+        [Fact]
+        public async Task GetSubcategoryByIdAsync_ReturnsError_WhenSubcategoryIdIsInvalid()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            int subcategoryId = -1; // Invalid subcategory ID
+            // Act
+            var result = await repository.GetSubcategoryByIdAsync(subcategoryId);
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal($"Subcategory with ID {subcategoryId} not found.", result.ErrorMessages.FirstOrDefault());
+        }
 
+        [Fact]
+        public async Task CreateSubcategoryAsync_ReturnsSuccess_WhenSubcategoryIsCreated()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            var newSubcategory = new CreateSubcategoryDTO { Name = "New Subcategory", CategoryId = 1 };
+
+            // Act
+            var result = await repository.CreateSubcategoryAsync(newSubcategory);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal("New Subcategory", result.Data.Name);
+        }
+
+        [Fact]
+        public async Task CreateSubcategoryAsync_SubcategoryWithDuplicateName_ReturnsBadRequest()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            var newSubcategory = new CreateSubcategoryDTO { Name = "Face", CategoryId = 1 }; 
+
+            // Act
+            var result = await repository.CreateSubcategoryAsync(newSubcategory);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal($"A subcategory with the name '{newSubcategory.Name}' already exists.", result.ErrorMessages.FirstOrDefault());
+        }
+
+        [Fact]
+        public async Task UpdateSubcategoryAsync_SubcategoryIsUpdatedSuccessfully()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            var updatedSubcategory = new UpdateSubcategoryDTO {Id = 1, Name = "Updated Face", CategoryId = 1 };
+
+            // Act
+            var result = await repository.UpdateSubcategoryAsync(updatedSubcategory);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal("Updated Face", result.Data.Name);
+        }
+
+        [Fact]
+        public async Task UpdateSubcategoryAsync_SubcategoryDoesNotExist_ReturnsNotFound()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            var updatedSubcategory = new UpdateSubcategoryDTO {Id = 999, Name = "Updated Face", CategoryId = 1 };
+
+            // Act
+            var result = await repository.UpdateSubcategoryAsync(updatedSubcategory);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal($"Subcategory with ID {updatedSubcategory.Id} not found.", result.ErrorMessages.FirstOrDefault());
+        }
+
+        [Fact]
+        public async Task UpdateSubcategoryAsync_SubcategoryWithDuplicateName_ReturnsBadRequest()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            var updatedSubcategory = new UpdateSubcategoryDTO { Id = 1, Name = "Face", CategoryId = 1 };
+
+            // Act
+            var result = await repository.UpdateSubcategoryAsync(updatedSubcategory);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal($"A subcategory with the name '{updatedSubcategory.Name}' already exists.", result.ErrorMessages.FirstOrDefault());
+        }
+
+        [Fact]
+        public async Task DeleteSubcategoryAsync_SubcategoryIsDeletedSuccessfully()
+        {
+            // Arrange
+            var context = GetInMemoryDbCntext();
+            var repository = new SubcategoryRepostory(context);
+            var subcategoryToDelete = new Subcategory { Id = 1 };
+
+            // Act
+            var result = await repository.DeleteSubcategoryAsync(subcategoryToDelete.Id);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.True(result.Data);
+        }
     }
 }
