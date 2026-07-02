@@ -44,4 +44,4 @@ jobs:
 
       - name: Run tests
         working-directory: ./luxe/luxe.tests
-        run: dotnet test --no-build
+        run: dotnet test --no-restore --verbosity normal
