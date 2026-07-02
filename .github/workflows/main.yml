@@ -43,5 +43,5 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Run tests
-        working-directory: ./luxe/luxe.Server
+        working-directory: ./luxe/luxe.tests/
         run: dotnet test --no-restore --verbosity normal
