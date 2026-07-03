@@ -37,7 +37,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             // Act
             var result = await repository.GetAllSubcategoriesAsync();
             // Assert
@@ -53,7 +53,7 @@ namespace luxe.tests.Infrastructure.Repository
 
             context.Subcategory.RemoveRange(context.Subcategory);
             context.SaveChanges();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
 
             // Act
             var result = await repository.GetAllSubcategoriesAsync();
@@ -68,7 +68,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             int subcategoryId = 1;
             // Act
             var result = await repository.GetSubcategoryByIdAsync(subcategoryId);
@@ -85,7 +85,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             int subcategoryId = 999; // Non-existent subcategory ID
             // Act
             var result = await repository.GetSubcategoryByIdAsync(subcategoryId);
@@ -100,7 +100,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             int subcategoryId = -1; // Invalid subcategory ID
             // Act
             var result = await repository.GetSubcategoryByIdAsync(subcategoryId);
@@ -115,7 +115,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             var newSubcategory = new CreateSubcategoryDTO { Name = "New Subcategory", CategoryId = 1 };
 
             // Act
@@ -132,7 +132,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             var newSubcategory = new CreateSubcategoryDTO { Name = "Face", CategoryId = 1 }; 
 
             // Act
@@ -149,7 +149,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             var updatedSubcategory = new UpdateSubcategoryDTO {Id = 1, Name = "Updated Face", CategoryId = 1 };
 
             // Act
@@ -166,7 +166,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             var updatedSubcategory = new UpdateSubcategoryDTO {Id = 999, Name = "Updated Face", CategoryId = 1 };
 
             // Act
@@ -183,7 +183,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             var updatedSubcategory = new UpdateSubcategoryDTO { Id = 1, Name = "Face", CategoryId = 1 };
 
             // Act
@@ -200,7 +200,7 @@ namespace luxe.tests.Infrastructure.Repository
         {
             // Arrange
             var context = GetInMemoryDbCntext();
-            var repository = new SubcategoryRepostory(context);
+            var repository = new SubcategoryRepository(context);
             var subcategoryToDelete = new Subcategory { Id = 1 };
 
             // Act
