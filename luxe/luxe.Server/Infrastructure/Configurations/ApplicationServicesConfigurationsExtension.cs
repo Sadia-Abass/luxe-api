@@ -83,6 +83,9 @@ namespace luxe.Server.Infrastructure.Configurations
             services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
 
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<ISubcategoryRepository, SubcategoryRepository>();
+
             services.AddAuthorization();
 
             return services;
