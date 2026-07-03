@@ -188,7 +188,7 @@ namespace luxe.Server.Infrastructure.Repositories
                     };
                 }
 
-                if(await _appDbContext.Subcategory.AnyAsync(s => s.Name.ToLower() == updateSubcategoryDTO.Name.ToLower() || s.Id != updateSubcategoryDTO.Id))
+                if(await _appDbContext.Subcategory.AnyAsync(s => s.Name.ToLower() == updateSubcategoryDTO.Name.ToLower() && s.Id == updateSubcategoryDTO.Id))
                 {
                     return new ApiResponse<SubcategoryDTO>
                     {
