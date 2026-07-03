@@ -1,5 +1,6 @@
 ﻿using luxe.Server.Application.DTOs;
 using luxe.Server.Application.DTOs.Category;
+using luxe.Server.Application.Repositories;
 using luxe.Server.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,9 @@ namespace luxe.Server.API.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly CategoryRepository _categoryRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public CategoryController(CategoryRepository categoryRepository)
+        public CategoryController(ICategoryRepository categoryRepository)
         {
             this._categoryRepository = categoryRepository ?? throw new ArgumentNullException(nameof(categoryRepository));
         }
