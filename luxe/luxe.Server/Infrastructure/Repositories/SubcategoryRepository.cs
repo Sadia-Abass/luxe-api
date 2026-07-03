@@ -9,11 +9,11 @@ using System.Net;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
-    public class SubcategoryRepostory : ISubcategoryRepository
+    public class SubcategoryRepository : ISubcategoryRepository
     {
         private readonly AppDbContext _appDbContext;
 
-        public SubcategoryRepostory(AppDbContext appDbContext)
+        public SubcategoryRepository(AppDbContext appDbContext)
         {
             _appDbContext = appDbContext ?? throw new ArgumentNullException(nameof(appDbContext));
         }
