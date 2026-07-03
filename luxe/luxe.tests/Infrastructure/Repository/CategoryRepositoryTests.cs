@@ -190,6 +190,7 @@ namespace luxe.tests.Infrastructure.Repository
             Assert.Equal($"Category with id '{updatedCategory.Id}' not found.", result.ErrorMessages.First());
         }
 
+        [Fact]
         public async Task UpdateCategoryAsync_CategoryWithDuplicateName_ReturnsBadRequest()
         {
             // Arrange: Create a fresh in-memory context and repository for testing
