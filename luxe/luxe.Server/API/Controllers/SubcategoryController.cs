@@ -1,5 +1,6 @@
 ﻿using luxe.Server.Application.DTOs;
 using luxe.Server.Application.DTOs.Subcategory;
+using luxe.Server.Application.Repositories;
 using luxe.Server.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,11 +11,11 @@ namespace luxe.Server.API.Controllers
     [ApiController]
     public class SubcategoryController : ControllerBase
     {
-        private readonly SubcategoryRepostory _subcategoryRepostory;
+        private readonly ISubcategoryRepository _subcategoryRepository;
 
-        public SubcategoryController(SubcategoryRepostory subcategoryRepostory)
+        public SubcategoryController(ISubcategoryRepository subcategoryRepository)
         {
-            this._subcategoryRepostory = subcategoryRepostory ?? throw new ArgumentNullException(nameof(subcategoryRepostory));
+            _subcategoryRepository = subcategoryRepository ?? throw new ArgumentNullException(nameof(subcategoryRepository));
         }
 
         // GET: api/GetSubcategoryById/{id}
@@ -26,7 +27,7 @@ namespace luxe.Server.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var subcategoryResponse = await _subcategoryRepostory.GetSubcategoryByIdAsync(id);
+            var subcategoryResponse = await _subcategoryRepository.GetSubcategoryByIdAsync(id);
             if (subcategoryResponse == null)
             {
                 return NotFound();
@@ -44,7 +45,7 @@ namespace luxe.Server.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var subcategoriesResponse = await _subcategoryRepostory.GetAllSubcategoriesAsync();
+            var subcategoriesResponse = await _subcategoryRepository.GetAllSubcategoriesAsync();
             if (subcategoriesResponse == null)
             {
                 return NotFound();
@@ -62,7 +63,7 @@ namespace luxe.Server.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var createSubcategoryResponse = await _subcategoryRepostory.CreateSubcategoryAsync(createSubcategoryDTO);
+            var createSubcategoryResponse = await _subcategoryRepository.CreateSubcategoryAsync(createSubcategoryDTO);
 
             if (createSubcategoryResponse == null)
             {
@@ -81,7 +82,7 @@ namespace luxe.Server.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var updateSubcategoryResponse = await _subcategoryRepostory.UpdateSubcategoryAsync(updateSubcategoryDTO);
+            var updateSubcategoryResponse = await _subcategoryRepository.UpdateSubcategoryAsync(updateSubcategoryDTO);
 
             if (updateSubcategoryResponse == null)
             {
@@ -99,7 +100,7 @@ namespace luxe.Server.API.Controllers
                 return BadRequest(ModelState);
             }
 
-            var deleteSubcategoryResponse = await _subcategoryRepostory.DeleteSubcategoryAsync(id);
+            var deleteSubcategoryResponse = await _subcategoryRepository.DeleteSubcategoryAsync(id);
             if (deleteSubcategoryResponse == null)
             {
                 return NotFound();
