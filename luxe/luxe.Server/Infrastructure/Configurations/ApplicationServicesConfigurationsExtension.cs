@@ -86,6 +86,18 @@ namespace luxe.Server.Infrastructure.Configurations
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubcategoryRepository, SubcategoryRepository>();
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowClient", policy =>
+                {
+                    policy.WithOrigins("https://localhost:54368")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+                });
+            });
+
+            services.AddAuthentication();
             services.AddAuthorization();
 
             return services;
