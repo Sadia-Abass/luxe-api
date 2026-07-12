@@ -66,7 +66,7 @@ export async function apiFetch(path, options = {}, isFormData = false) {
 
   let response = await makeRequest();
 
-  // Mimic the Axios response interceptor: on 401, try to refresh once, then retry.
+  // Act like an interceptor: on 401, try to refresh once, then retry.
   if (response.status === 401) {
     if (isRefreshing) {
       // A refresh is already in flight - wait for it instead of firing another one.
