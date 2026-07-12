@@ -1,10 +1,5 @@
-import {
-  createContext,
-  useState,
-  useContext,
-  useEffect,
-  Children,
-} from "react";
+import { jwtDecode } from "jwt-decode";
+import { createContext, useState, useContext, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
@@ -19,136 +14,54 @@ export const useAuth = () => {
 };
 
 // AuthProvider component
-export const AuthProvider = ({ Children }) => {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      try {
+        const decoded = jwtDecode(accessToken);
+        setUser(buildUserFromToken(decoded));
+      } catch {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+      }
     }
-
     setLoading(false);
   }, []);
 
-  // Login function
-  const login = async (email, password) => {
-    try {
-      const response = await fetch(
-        "https://localhost:7217/api/authentication/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        },
-      );
+  function buildUserFromToken(decoded) {
+    // Roles can come back as a single string or an array depending on how many roles a user has -
+    // the ClaimTypes.Role claim from our .NET backend collapses to one value if there's only one role
+    const roles = decoded.role
+      ? Array.isArray(decoded)
+        ? decoded.role
+        : [decoded.role]
+      : [];
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Login failed");
-      }
+    return { id: decoded.sub, email: decoded.email, roles };
+  }
 
-      const data = await response.json();
-
-      // Save token and user data
-      localStorage.setItem("token", data.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: data.email,
-        }), //username: data.username
-      );
-
-      setUser({
-        email: data.email,
-        //username: data.username,
-      });
-
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-  };
-
-  // Register function
-  const register = async (firstname, lastname, email, password) => {
-    try {
-      const resposne = await fetch(
-        "https://localhost:7217/api/authentication/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ firstname, lastname, email, password }),
-        },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Registration failed");
-      }
-
-      // Save token and user data
-      localStorage.setItem("token", data.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          firstname: data.firstname,
-          lastname: data.lastname,
-          email: data.email,
-        }),
-      );
-
-      setUser({
-        firstname: data.firstname,
-        lastname: data.lastname,
-        email: data.email,
-      });
-
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
+  // login function
+  function login(accessToken, refreshToken) {
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+  }
 
   // Logout function
-  const logout = () => {
+  function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-  };
-
-  // Function to make authentication API calls
-  const fetchWithAuth = async (URL, options = {}) => {
-    const token = localStorage.getItem("token");
-
-    const config = {
-      ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    };
-
-    return fetch(URL, config);
-  };
+  }
 
   const value = {
     user,
     login,
-    register,
     logout,
-    fetchWithAuth,
+    isLoading,
     isAuthenticated: !!user,
   };
 
