@@ -1,6 +1,6 @@
 import { ROUTES } from "../util/constants";
 
-const BASE_URL = "";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 // Track whether a refresh is already in progress, so simultaneous
 // 401s from multiple requests don't each trigger their own refresh call
@@ -11,7 +11,7 @@ function subscribeTokenRefresh(callback) {
   refreshSubscribers.push(callback);
 }
 
-function onRefreshed(newAccessToken) {
+function rawRefresh(newAccessToken) {
   refreshSubscribers.forEach((callback) => callback(newAccessToken));
   refreshSubscribers = [];
 }
@@ -20,7 +20,7 @@ async function onRefreshed() {
   const expiredAccessToken = localStorage.getItem("accessToken");
   const refreshToken = localStorage.getItem("refreshToken");
 
-  const response = await fetch(`${BASE_URL}/auth/refresh`, {
+  const response = await fetch(`${BASE_URL}/authentication/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -58,7 +58,7 @@ export async function apiFetch(path, options = {}, isFormData = false) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
 
-    return fetch(`${BASE_URL}`, {
+    return fetch(`${BASE_URL}${path}`, {
       ...options,
       headers,
     });
