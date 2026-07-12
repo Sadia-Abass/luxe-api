@@ -9,7 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginUser] = useAuth();
+  const { loginUser } = useAuth();
   const navigate = useNavigate();
 
   async function handlesubmit(e) {
@@ -19,6 +19,7 @@ export default function Login() {
 
     try {
       const response = await login(email, password);
+
       loginUser(response.data.acceesToken, response.data.refreshToken);
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
