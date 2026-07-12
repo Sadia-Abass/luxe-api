@@ -3,18 +3,8 @@ import { createContext, useState, useContext, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
-// Create the context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-
-  return context;
-};
-
 // AuthProvider component
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,11 +47,11 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   }
 
-  const value = {
+  const values = {
     user,
     login,
     logout,
-    isLoading,
+    loading,
     isAuthenticated: !!user,
   };
 
@@ -70,4 +60,15 @@ export const AuthProvider = ({ children }) => {
   }
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
-};
+}
+
+// Create the context
+export function useAuth() {
+  // const context = useContext(AuthContext);
+  // if (!context) {
+  //   throw new Error("useAuth must be used within an AuthProvider");
+  // }
+
+  // return context;
+  return useContext(AuthContext);
+}
