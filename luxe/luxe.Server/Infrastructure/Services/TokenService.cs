@@ -1,6 +1,7 @@
 ﻿using luxe.Server.Application.Services;
 using luxe.Server.Domain.Entities;
 using luxe.Server.Infrastructure.Configurations;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -11,49 +12,45 @@ namespace luxe.Server.Infrastructure.Services
 {
     public class TokenService : ITokenService
     {
-        private readonly IConfiguration _configuration;
+        private readonly JwtSettings _jwtSettings;
 
-        public TokenService(IConfiguration configuration)
+        public TokenService(IOptions<JwtSettings> jwtSettings)
         {
-            _configuration = configuration;
+            _jwtSettings = jwtSettings.Value;
         }
 
         public string CreateAccessTokenAsync(AppUser user, IList<string> roles)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings").Get<JwtSettings>();
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey));
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings?.SecretKey ?? string.Empty));
             var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256); 
 
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // unique token ID
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
             };
 
-            foreach(var role in roles)
+            // Add each role as its own claim 
+            foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
             var token = new JwtSecurityToken(
-                issuer: jwtSettings.Issuer,
-                audience: jwtSettings.Audience,
+                issuer: _jwtSettings?.Issuer ?? string.Empty,
+                audience: _jwtSettings?.Audience ?? string.Empty,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(jwtSettings.MinutesToExpiration),
+                expires: DateTime.UtcNow.AddMinutes(_jwtSettings?.MinutesToExpiration ?? 0),
                 signingCredentials: credentials);
-
-            //var tokenHandler = new JwtSecurityTokenHandler();
-            //var tokenString = tokenHandler.WriteToken(token);
-            //return Task.FromResult(tokenString);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public RefreshToken CreateRefreshToken(string ipAddress)
+        public RefreshToken CreateRefreshToken(string userId)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings").Get<JwtSettings>();
+            // Cryptographically random bytes - NOT a JWT, just a secure random string
             var randomBytes = new byte[64];
             using var random = RandomNumberGenerator.Create();
             random.GetBytes(randomBytes);
@@ -61,10 +58,38 @@ namespace luxe.Server.Infrastructure.Services
             return new RefreshToken
             {
                 Token = Convert.ToBase64String(randomBytes),
-                Expires = DateTime.UtcNow.AddDays((double)jwtSettings!.RefreshTokenExpirationDays),
+                Expires = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
+                UserId = userId,
                 CreatedDate = DateTime.UtcNow,
-                CreatedByIp = ipAddress
+                //CreatedByIp = ipAddress
             };
+        }
+
+        // This defends against a known JWT attack where someone crafts a token using the alg: none header, tricking a naive validator into skipping signature verification entirely. Checking the algorithm explicitly closes that hole.
+        public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = _jwtSettings.Issuer,
+                ValidateAudience = true,
+                ValidAudience = _jwtSettings.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateLifetime = false, // we want to get claims from expired token
+            };
+
+            var principal = new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out var securityToken);
+
+            if(securityToken is not JwtSecurityToken jwtSecurityToken ||
+                !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new SecurityTokenException("Invalid token");
+            }
+
+            return principal;
         }
     }
 }
