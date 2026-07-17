@@ -6,6 +6,6 @@ namespace luxe.Server.Application.DTOs.AuthenticationDTOs
     {
         public string AccessToken { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
-        public AppUserDTO User { get; set; } = new AppUserDTO();
+        public DateTime AccessTokenExpiresAt { get; set; }
     }
 }
