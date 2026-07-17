@@ -20,11 +20,19 @@ namespace luxe.Server.Infrastructure.Configurations
             // Configure services, options, etc. based on the application's needs
             //Congigure EF Core with SQL Server
             var connectionString = configuration.GetConnectionString("luxeDB") ?? throw new ArgumentNullException(nameof(configuration));
-
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
             });
+
+            // Bind JwtSettings from appsettings.json
+            services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+            var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
+            if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.SecretKey))
+            {
+                throw new InvalidOperationException("jwt secret key is not configured properly");
+            }
+    
 
             services.AddIdentity<AppUser, AppRole>(options =>
             {
@@ -44,11 +52,7 @@ namespace luxe.Server.Infrastructure.Configurations
             .AddTokenProvider<DataProtectorTokenProvider<AppUser>>("RefreshTokenProvider");
 
 
-            var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
-            if(jwtSettings == null || string.IsNullOrEmpty(jwtSettings.SecretKey))
-            {
-                throw new InvalidOperationException("jwt secret key is not configured properly");
-            }
+           
 
             services.AddAuthentication(options => 
             { 
@@ -75,6 +79,11 @@ namespace luxe.Server.Infrastructure.Configurations
                     RoleClaimType = ClaimTypes.Role,
                     NameClaimType = ClaimTypes.Name
                 };
+            }).AddCookie(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
 
             services.AddScoped<IFileUploaderService, FileUploaderService>();

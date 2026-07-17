@@ -6,6 +6,7 @@ using luxe.Server.Domain.Entities;
 using luxe.Server.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
@@ -55,7 +56,7 @@ namespace luxe.Server.Infrastructure.Repositories
                     IsActive = true
                 };
 
-                var result = await _userManager.CreateAsync(user, registerRequestDto.Password);
+                var result = await _userManager.CreateAsync(user, registerRequestDto.Password );
                 if (!result.Succeeded)
                 {
                     return new ApiResponse<TokenResponseDTO>
@@ -73,7 +74,7 @@ namespace luxe.Server.Infrastructure.Repositories
 
                 return new ApiResponse<TokenResponseDTO>
                 {
-                    StatusCode = System.Net.HttpStatusCode.OK,
+                    StatusCode = HttpStatusCode.OK,
                     IsSuccess = true,
                     ErrorMessages = new List<string> { "User registered successfully." },
                     Data = null
@@ -83,7 +84,7 @@ namespace luxe.Server.Infrastructure.Repositories
             {
                 return new ApiResponse<TokenResponseDTO>
                 {
-                    StatusCode = System.Net.HttpStatusCode.InternalServerError,
+                    StatusCode = HttpStatusCode.InternalServerError,
                     IsSuccess = false,
                     ErrorMessages = new List<string> { "An error occurred during registration.", ex.Message },
                     Data = null
@@ -92,20 +93,61 @@ namespace luxe.Server.Infrastructure.Repositories
             
         }
 
+        // Implementation for login logic
+        // This method should validate the user's credentials, generate a token, and return it in the response.
         public async Task<ApiResponse<TokenResponseDTO>> LoginAsync(LoginRequestDTO loginRequestDto)
         {
-            var user = await _userManager.Users.Include(u => u.RefreshTokens).SingleOrDefaultAsync(u => u.Email == loginRequestDto.Email);
-            //var user = await _userManager.FindByEmailAsync(loginRequestDto.Email);
-            if (user == null || !await _userManager.CheckPasswordAsync(user, loginRequestDto.Password))
+            //Check if the user exists
+            var user = await _userManager.FindByEmailAsync(loginRequestDto.Email);
+            if (user == null)
             {
                 return new ApiResponse<TokenResponseDTO>
                 {
-                    StatusCode = System.Net.HttpStatusCode.Unauthorized,
+                    StatusCode = HttpStatusCode.Unauthorized,
                     IsSuccess = false,
                     ErrorMessages = new List<string> { "Invalid email or password." },
                     Data = null 
                 };
             }
+
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                return new ApiResponse<TokenResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "User account is locked due to multiple failed attempts. Try again later." },
+                    Data = null
+                };
+            }
+
+            if(!await _userManager.CheckPasswordAsync(user, loginRequestDto.Password))
+            {
+                // increments the lockout counter
+                await _userManager.AccessFailedAsync(user);
+                return new ApiResponse<TokenResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Invalid email or password." },
+                    Data = null
+                };
+            }
+
+            if(!await _userManager.IsEmailConfirmedAsync(user))
+            {
+                return new ApiResponse<TokenResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Email is not confirmed. Please confirm your email before logging in." },
+                    Data = null
+                };
+            }
+
+            // successful login clears the failed login counter
+            await _userManager.ResetAccessFailedCountAsync(user);
+
 
             var roles = await _userManager.GetRolesAsync(user);
             var token = _tokenService.CreateAccessTokenAsync(user, roles);
@@ -120,7 +162,12 @@ namespace luxe.Server.Infrastructure.Repositories
                 StatusCode = System.Net.HttpStatusCode.OK,
                 IsSuccess = true,
                 ErrorMessages = new List<string>(),
-                Data = new TokenResponseDTO { AccessToken = token, RefreshToken = refreshToken.Token }
+                Data = new TokenResponseDTO 
+                { 
+                    AccessToken = token, 
+                    RefreshToken = refreshToken.Token ?? string.Empty, 
+                    AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15) 
+                }
             };
         }
 

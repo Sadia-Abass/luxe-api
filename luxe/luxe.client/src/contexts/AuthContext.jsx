@@ -1,24 +1,43 @@
 import { jwtDecode } from "jwt-decode";
 import { createContext, useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { ROUTES } from "../util/constants";
+import { loginApi } from "../api/authApi";
+
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const AuthContext = createContext(null);
 
+// Create the context
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+
+  return context;
+  //return useContext(AuthContext);
+}
+
 // AuthProvider component
 export function AuthProvider({ children }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const userData = localStorage.getItem("data");
     const accessToken = localStorage.getItem("accessToken");
-    if (accessToken) {
-      try {
-        const decoded = jwtDecode(accessToken);
-        setUser(buildUserFromToken(decoded));
-      } catch {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-      }
+
+    console.log(userData);
+
+    if (userData && accessToken) {
+      setUser(JSON.parse(userData));
+      setToken(jwtDecode(accessToken.accessToken));
     }
+
     setLoading(false);
   }, []);
 
@@ -35,10 +54,25 @@ export function AuthProvider({ children }) {
   }
 
   // login function
-  function login(accessToken, refreshToken) {
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-  }
+  const login = async (email, password) => {
+    try {
+      const response = await fetch(`${BASE_URL}/authentication/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) toast.warning("Login failed");
+
+      const data = await response.json();
+      setUser(data.user);
+      setToken(data.accessToken);
+      localStorage.setItem("accessToken", data.accessToken);
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  };
 
   // Logout function
   function logout() {
@@ -60,15 +94,4 @@ export function AuthProvider({ children }) {
   }
 
   return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
-}
-
-// Create the context
-export function useAuth() {
-  // const context = useContext(AuthContext);
-  // if (!context) {
-  //   throw new Error("useAuth must be used within an AuthProvider");
-  // }
-
-  // return context;
-  return useContext(AuthContext);
 }

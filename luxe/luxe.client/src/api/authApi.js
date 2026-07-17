@@ -5,12 +5,18 @@ function buildQuery(params) {
   return new URLSearchParams(params).toString();
 }
 
-export const login = (email, password) =>
-  fetch(`${BASE_URL}/authentication/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+export const loginApi = async (email, password) => {
+  try {
+    const date = await fetch(`${BASE_URL}/authentication/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    return data;
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const register = (formData) =>
   apiFetchJson(

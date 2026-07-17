@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { login } from "../../api/authApi";
+import { loginApi } from "../../api/authApi";
 import { useAuth } from "../../contexts/AuthContext";
 import { ROUTES } from "../../util/constants";
 
@@ -9,7 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { loginUser } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   async function handlesubmit(e) {
@@ -18,9 +18,8 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      const response = await login(email, password);
+      await login(email, password);
 
-      loginUser(response.data.acceesToken, response.data.refreshToken);
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
       setError(
