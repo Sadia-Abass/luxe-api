@@ -6,7 +6,10 @@ using luxe.Server.Domain.Entities;
 using luxe.Server.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using System.Net;
+using System.Security.Claims;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
@@ -15,15 +18,16 @@ namespace luxe.Server.Infrastructure.Repositories
         private readonly AppDbContext _appDbContext;
         private readonly UserManager<AppUser> _userManager;
         private readonly ITokenService _tokenService;
+        private readonly IUserRepository _userRepository;
         private readonly IFileUploaderService _fileUploaderService;
-        private readonly HttpContext _httpContext;
+   
 
-        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IFileUploaderService fileUploaderService, IHttpContextAccessor httpContextAccessor)
+        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IUserRepository userRepository, IFileUploaderService fileUploaderService)
         {
             _appDbContext = appDbContext;
-            _userManager = userManager;
-            _httpContext = httpContextAccessor.HttpContext;
+            _userManager = userManager;      
             _tokenService = tokenService;
+            _userRepository = userRepository;
             _fileUploaderService = fileUploaderService;
         }
 
@@ -36,9 +40,9 @@ namespace luxe.Server.Infrastructure.Repositories
                 {
                     return new ApiResponse<TokenResponseDTO>
                     {
-                        StatusCode = System.Net.HttpStatusCode.BadRequest,
+                        StatusCode = HttpStatusCode.Conflict,
                         IsSuccess = false,
-                        ErrorMessages = new List<string> { "Email is already in use." },
+                        ErrorMessages = new List<string> { "A user with this email already exists." },
                         Data = null
                     };
                 }
@@ -56,12 +60,13 @@ namespace luxe.Server.Infrastructure.Repositories
                     IsActive = true
                 };
 
-                var result = await _userManager.CreateAsync(user, registerRequestDto.Password );
+                var result = await _userManager.CreateAsync(user, registerRequestDto?.Password ?? string.Empty);
+
                 if (!result.Succeeded)
                 {
                     return new ApiResponse<TokenResponseDTO>
                     {
-                        StatusCode = System.Net.HttpStatusCode.BadRequest,
+                        StatusCode = HttpStatusCode.BadRequest,
                         IsSuccess = false,
                         ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
                         Data = null
@@ -70,13 +75,13 @@ namespace luxe.Server.Infrastructure.Repositories
 
                 await _userManager.AddToRoleAsync(user, "Customer");
 
-                var tokenResponse = _tokenService.CreateAccessTokenAsync(user, new List<string> { "Customer" });
+                //var tokenResponse = _tokenService.CreateAccessTokenAsync(user, new List<string> { "Customer" });
 
                 return new ApiResponse<TokenResponseDTO>
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSuccess = true,
-                    ErrorMessages = new List<string> { "User registered successfully." },
+                    ErrorMessages = new List<string> { "Registration successful. Please check your email to confirm your account." },
                     Data = null
                 };
             }
@@ -150,12 +155,12 @@ namespace luxe.Server.Infrastructure.Repositories
 
 
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _tokenService.CreateAccessTokenAsync(user, roles);
+            var accessToken = _tokenService.CreateAccessTokenAsync(user, roles);
+            var refreshToken = _tokenService.CreateRefreshToken(user.Id);
 
-            var refreshToken = _tokenService.CreateRefreshToken(GetIpAddress());
 
             user.RefreshTokens.Add(refreshToken);
-            await _userManager.UpdateAsync(user);
+            await _userRepository.SaveRefreshTokenAsync(refreshToken);
 
             return new ApiResponse<TokenResponseDTO>
             {
@@ -164,7 +169,7 @@ namespace luxe.Server.Infrastructure.Repositories
                 ErrorMessages = new List<string>(),
                 Data = new TokenResponseDTO 
                 { 
-                    AccessToken = token, 
+                    AccessToken = accessToken, 
                     RefreshToken = refreshToken.Token ?? string.Empty, 
                     AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15) 
                 }
@@ -173,9 +178,28 @@ namespace luxe.Server.Infrastructure.Repositories
 
         public async Task<ApiResponse<TokenResponseDTO>> RefreshTokenAsync(TokenRequestDTO tokenRequestDto)
         {
-            var refreshToken = tokenRequestDto.RefreshToken;
-            var user = await _userManager.Users.Include(u => u.RefreshTokens).SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == refreshToken));
-            if (user == null)
+            ClaimsPrincipal principal;
+
+            try
+            {
+                principal = _tokenService.GetPrincipalFromExpiredToken(tokenRequestDto.AccessToken ?? string.Empty)!;
+            }
+            catch (SecurityTokenException)
+            {
+                return new ApiResponse<TokenResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Invalid access token." },
+                    Data = null
+                };
+            }
+
+            var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            var storedRefreshToken = await _userRepository.GetRefreshTokenAsync(tokenRequestDto.RefreshToken ?? string.Empty);
+
+
+            if (storedRefreshToken == null || storedRefreshToken.UserId != userId)
             {
                 return new ApiResponse<TokenResponseDTO>
                 {
@@ -186,88 +210,185 @@ namespace luxe.Server.Infrastructure.Repositories
                 };
             }
 
-            var existingRefreshToken = user.RefreshTokens.Single(t => t.Token == refreshToken);
-            if (!existingRefreshToken.IsActive)
+           
+
+            if (!storedRefreshToken.IsActive)
             {
+                if (tokenRequestDto.RefreshToken != null) 
+                {
+                    await RevokeAllUserTokenAsync(storedRefreshToken.UserId);
+                }
+
                 return new ApiResponse<TokenResponseDTO>
                 {
-                    StatusCode = System.Net.HttpStatusCode.Unauthorized,
+                    StatusCode = HttpStatusCode.Unauthorized,
                     IsSuccess = false,
-                    ErrorMessages = new List<string> { "Refresh token is no longer active." },
+                    ErrorMessages = new List<string> { "Refresh token is no longer valid. Please log in again." },
                     Data = null
                 };
             }
 
-            existingRefreshToken.RevokedDate = DateTime.UtcNow;
-            existingRefreshToken.RevokedByIp = GetIpAddress();
-            
-            var newRefreshToken = _tokenService.CreateRefreshToken(GetIpAddress());
-            existingRefreshToken.ReplacedByToken = newRefreshToken.Token;
-            user.RefreshTokens.Add(newRefreshToken);
-
-            await _userManager.UpdateAsync(user);
-
-            // Generate new access token
+            var user = storedRefreshToken.User;
             var roles = await _userManager.GetRolesAsync(user);
+
+            var newRefreshToken = _tokenService.CreateRefreshToken(user.Id);
+            await _userRepository.RevokeRefreshTokenAsync(storedRefreshToken, newRefreshToken.Token);
+            await _userRepository.SaveRefreshTokenAsync(newRefreshToken);
+
             var newAccessToken = _tokenService.CreateAccessTokenAsync(user, roles);
 
             return new ApiResponse<TokenResponseDTO>
             {
-                StatusCode = System.Net.HttpStatusCode.OK,
+                StatusCode = HttpStatusCode.OK,
                 IsSuccess = true,
                 ErrorMessages = new List<string>(),
-                Data = new TokenResponseDTO { AccessToken = newAccessToken, RefreshToken = newRefreshToken.Token }
+                Data = new TokenResponseDTO { AccessToken = newAccessToken, RefreshToken = newRefreshToken.Token, AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(15) }
             };
         }
 
-        public async Task<ApiResponse<string>> RevokeTokenAsync(TokenRequestDTO tokenRequestDto)
+        public async Task<ApiResponse<string>> RevokeTokenAsync(RevokeTokenDTO revokeTokenDto)
         {
-            var token = tokenRequestDto.RefreshToken;
-            var user = await _userManager.Users.Include(u => u.RefreshTokens).SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
-            if (user == null)
+            var storedRefreshToken = await _userRepository.GetRefreshTokenAsync(revokeTokenDto.RefreshToken);
+            var user = await _userManager.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == storedRefreshToken.Token));
+
+
+            if(storedRefreshToken == null)
             {
                 return new ApiResponse<string>
                 {
-                    StatusCode = System.Net.HttpStatusCode.NotFound,
+                    StatusCode = HttpStatusCode.NotFound,
                     IsSuccess = false,
-                    ErrorMessages = new List<string> { "Token not found." },
+                    ErrorMessages = new List<string> { "Refresh token not found." },
                     Data = null
                 };
             }
 
-            var existingToken = user.RefreshTokens.Single(t => t.Token == token);
-            if (!existingToken.IsActive)
+            var currentUserId = user?.Id;
+            if (storedRefreshToken.UserId != currentUserId)
             {
                 return new ApiResponse<string>
                 {
-                    StatusCode = System.Net.HttpStatusCode.BadRequest,
+                    StatusCode = HttpStatusCode.Forbidden,
                     IsSuccess = false,
-                    ErrorMessages = new List<string> { "Token is already revoked." },
+                    ErrorMessages = new List<string> { "You are not authorized to revoke this token." },
                     Data = null
                 };
             }
 
-            existingToken.RevokedDate = DateTime.UtcNow;
-            existingToken.RevokedByIp = GetIpAddress();
+            if(!storedRefreshToken.IsActive)
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Refresh token is already inactive." },
+                    Data = null
+                };
+            }
 
-            await _userManager.UpdateAsync(user);
+            await _userRepository.RevokeRefreshTokenAsync(storedRefreshToken);
+
             return new ApiResponse<string>
             {
-                StatusCode = System.Net.HttpStatusCode.OK,
+                StatusCode = HttpStatusCode.OK,
                 IsSuccess = true,
-                ErrorMessages = new List<string>() { "Refresh token revoked successfully." },
+                ErrorMessages = new List<string> { "Logged out successfully." },
                 Data = null
-            };
+            };        
         }
 
-        private string GetIpAddress()
+
+        private async Task RevokeAllUserTokenAsync(string userId)
         {
-            if(_httpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
-            {
-                return _httpContext.Request.Headers["X-Forwarded-For"].ToString();
-            }
+            var user = await _userRepository.GetUserWithRefreshTokenAsync(userId);
+            if (user == null) return;
 
-            return _httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            
+            foreach (var token in user.RefreshTokens.Where(t => t.IsActive))
+            {
+                await _userRepository.RevokeRefreshTokenAsync(token);
+            }
         }
+
+        //private string GetIpAddress()
+        //{
+        //    if(_httpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
+        //    {
+        //        return _httpContext.Request.Headers["X-Forwarded-For"].ToString();
+        //    }
+
+        //    return _httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+        //}
+
+
+        //var existingRefreshToken = user.RefreshTokens.Single(t => t.Token == refreshToken);
+        //if (!existingRefreshToken.IsActive)
+        //{
+        //    return new ApiResponse<TokenResponseDTO>
+        //    {
+        //        StatusCode = System.Net.HttpStatusCode.Unauthorized,
+        //        IsSuccess = false,
+        //        ErrorMessages = new List<string> { "Refresh token is no longer active." },
+        //        Data = null
+        //    };
+        //}
+
+        // existingRefreshToken.RevokedDate = DateTime.UtcNow;
+        //existingRefreshToken.RevokedByIp = GetIpAddress();
+
+
+        //existingRefreshToken.ReplacedByToken = newRefreshToken.Token;
+        // user.RefreshTokens.Add(newRefreshToken);
+
+        // Generate new access token
+        // var roles = await _userManager.GetRolesAsync(user);
+        //var newAccessToken = _tokenService.CreateAccessTokenAsync(user, roles);
+
+        //await _userManager.UpdateAsync(user);
+
+        //existingToken.RevokedByIp = GetIpAddress();
+
+        //private readonly HttpContext _httpContext; , IHttpContextAccessor httpContextAccessor    //_httpContext = httpContextAccessor.HttpContext;
+
+        //var refreshToken = tokenRequestDto.RefreshToken;
+        //var user = await _userManager.Users.Include(u => u.RefreshTokens).SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == refreshToken));
+
+
+        //var token = revokeTokenDto.RefreshToken;
+        //var user = await _userManager.Users.Include(u => u.RefreshTokens).SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
+        //if (user == null)
+        //{
+        //    return new ApiResponse<string>
+        //    {
+        //        StatusCode = System.Net.HttpStatusCode.NotFound,
+        //        IsSuccess = false,
+        //        ErrorMessages = new List<string> { "Token not found." },
+        //        Data = null
+        //    };
+        //}
+
+        //var existingToken = user.RefreshTokens.Single(t => t.Token == token);
+        //if (!existingToken.IsActive)
+        //{
+        //    return new ApiResponse<string>
+        //    {
+        //        StatusCode = System.Net.HttpStatusCode.BadRequest,
+        //        IsSuccess = false,
+        //        ErrorMessages = new List<string> { "Token is already revoked." },
+        //        Data = null
+        //    };
+        //}
+
+        //existingToken.RevokedDate = DateTime.UtcNow;
+
+
+        //await _userManager.UpdateAsync(user);
+        //return new ApiResponse<string>
+        //{
+        //    StatusCode = System.Net.HttpStatusCode.OK,
+        //    IsSuccess = true,
+        //    ErrorMessages = new List<string>() { "Refresh token revoked successfully." },
+        //    Data = null
+        //};
     }
 }
