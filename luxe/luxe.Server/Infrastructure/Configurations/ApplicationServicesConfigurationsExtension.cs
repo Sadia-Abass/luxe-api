@@ -45,14 +45,11 @@ namespace luxe.Server.Infrastructure.Configurations
                 options.User.RequireUniqueEmail = true;
                 options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 
-                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedEmail = true;
                 options.SignIn.RequireConfirmedPhoneNumber = false;
             }).AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders()
             .AddTokenProvider<DataProtectorTokenProvider<AppUser>>("RefreshTokenProvider");
-
-
-           
 
             services.AddAuthentication(options => 
             { 
@@ -90,10 +87,12 @@ namespace luxe.Server.Infrastructure.Configurations
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IAuthenticationRepository, AuthenticationRepository>();
-            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
-
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubcategoryRepository, SubcategoryRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+
+ 
 
             services.AddCors(options =>
             {
