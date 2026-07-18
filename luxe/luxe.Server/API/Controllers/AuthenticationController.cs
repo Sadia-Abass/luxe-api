@@ -53,9 +53,9 @@ namespace luxe.Server.API.Controllers
         }
 
         [HttpPost("revoke")]
-        public async Task<IActionResult> RevokeToken([FromBody] TokenRequestDTO tokenRequestDto)
+        public async Task<IActionResult> RevokeToken([FromBody] RevokeTokenDTO revokeTokenDto)
         {
-            var result = await _authenticationRepository.RevokeTokenAsync(tokenRequestDto);
+            var result = await _authenticationRepository.RevokeTokenAsync(revokeTokenDto);
             if (!result.IsSuccess)
             {
                 return NotFound(result);
