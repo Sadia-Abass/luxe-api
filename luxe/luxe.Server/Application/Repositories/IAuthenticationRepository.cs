@@ -9,6 +9,6 @@ namespace luxe.Server.Application.Repositories
         Task<ApiResponse<TokenResponseDTO>> RegisterAsync(RegistrationRequestDTO registerRequestDto);
         Task<ApiResponse<TokenResponseDTO>> LoginAsync(LoginRequestDTO loginRequestDto);
         Task<ApiResponse<TokenResponseDTO>> RefreshTokenAsync(TokenRequestDTO tokenRequestDto);
-        Task<ApiResponse<string>> RevokeTokenAsync(TokenRequestDTO tokenRequestDto);
+        Task<ApiResponse<string>> RevokeTokenAsync(RevokeTokenDTO revokeTokenDto);
     }
 }
