@@ -58,10 +58,9 @@ namespace luxe.Server.Infrastructure.Services
             return new RefreshToken
             {
                 Token = Convert.ToBase64String(randomBytes),
-                Expires = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
+                ExpireDate = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
                 UserId = userId,
                 CreatedDate = DateTime.UtcNow,
-                //CreatedByIp = ipAddress
             };
         }
 
