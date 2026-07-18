@@ -1,6 +1,7 @@
 ﻿using luxe.Server.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 
 
 namespace luxe.Server.Infrastructure.Data
@@ -103,6 +104,15 @@ namespace luxe.Server.Infrastructure.Data
                 .WithMany(c => c.Subcategory)
                 .HasForeignKey(s => s.CategoryId)
                 .IsRequired());
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasIndex(rt => rt.Token).IsUnique(); // Ensure the Token property is unique and fast lookups when validating a refresh token
+                entity.HasOne(rt => rt.User)
+                      .WithMany(u => u.RefreshTokens)
+                      .HasForeignKey(rt => rt.UserId)
+                      .OnDelete(DeleteBehavior.Cascade); // deleting a user deletes their tokens too
+            });
 
             modelBuilder.Seed();
         }
