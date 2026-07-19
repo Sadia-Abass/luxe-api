@@ -7,6 +7,7 @@ using luxe.Server.Infrastructure.Configurations;
 using luxe.Server.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
 using System.Net;
@@ -24,7 +25,7 @@ namespace luxe.Server.Infrastructure.Repositories
         private readonly IEmailService _emailService;
         private readonly ClientSettings _clientSettings;
 
-        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IUserRepository userRepository, IFileUploaderService fileUploaderService, IEmailService emailService, ClientSettings clientSettings)
+        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IUserRepository userRepository, IFileUploaderService fileUploaderService, IEmailService emailService, IOptions<ClientSettings> clientSettings)
         {
             _appDbContext = appDbContext;
             _userManager = userManager;      
@@ -32,7 +33,7 @@ namespace luxe.Server.Infrastructure.Repositories
             _userRepository = userRepository;
             _fileUploaderService = fileUploaderService;
             _emailService = emailService;
-            _clientSettings = clientSettings;
+            _clientSettings = clientSettings.Value;
         }
 
         public async Task<ApiResponse<TokenResponseDTO>> RegisterAsync(RegistrationRequestDTO registerRequestDto)
@@ -325,6 +326,43 @@ namespace luxe.Server.Infrastructure.Repositories
             {
                 await _userRepository.RevokeRefreshTokenAsync(token);
             }
+        }
+
+        public async Task<ApiResponse<string>> ConfirmEmail(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if(user == null)
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "User not found." },
+                    Data = null
+                };
+            }
+
+            var decodedToke = Uri.UnescapeDataString(token);
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToke);
+
+            if(!result.Succeeded)
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Email confirmation failed. The link may have expired." },
+                    Data = null
+                };
+            }
+
+            return new ApiResponse<string>
+            {
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                ErrorMessages = new List<string> { "Email confirmed successfully. You can now log in." },
+                Data = null
+            };
         }
 
 
