@@ -63,5 +63,17 @@ namespace luxe.Server.API.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string token)
+        {
+            var result = await _authenticationRepository.ConfirmEmail(userId, token);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }
