@@ -3,6 +3,7 @@ using luxe.Server.Application.DTOs.AuthenticationDTOs;
 using luxe.Server.Application.Repositories;
 using luxe.Server.Application.Services;
 using luxe.Server.Domain.Entities;
+using luxe.Server.Infrastructure.Configurations;
 using luxe.Server.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,15 +21,18 @@ namespace luxe.Server.Infrastructure.Repositories
         private readonly ITokenService _tokenService;
         private readonly IUserRepository _userRepository;
         private readonly IFileUploaderService _fileUploaderService;
-   
+        private readonly IEmailService _emailService;
+        private readonly ClientSettings _clientSettings;
 
-        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IUserRepository userRepository, IFileUploaderService fileUploaderService)
+        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IUserRepository userRepository, IFileUploaderService fileUploaderService, IEmailService emailService, ClientSettings clientSettings)
         {
             _appDbContext = appDbContext;
             _userManager = userManager;      
             _tokenService = tokenService;
             _userRepository = userRepository;
             _fileUploaderService = fileUploaderService;
+            _emailService = emailService;
+            _clientSettings = clientSettings;
         }
 
         public async Task<ApiResponse<TokenResponseDTO>> RegisterAsync(RegistrationRequestDTO registerRequestDto)
@@ -76,6 +80,19 @@ namespace luxe.Server.Infrastructure.Repositories
                 await _userManager.AddToRoleAsync(user, "Customer");
 
                 //var tokenResponse = _tokenService.CreateAccessTokenAsync(user, new List<string> { "Customer" });
+
+                var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var encodedEmailToken = Uri.EscapeDataString(emailToken);
+
+                var confirmationLink = $"{_clientSettings.BaseUrl}/confirm-email?userId={user.Id}&token={encodedEmailToken}";
+
+                var emailBody = $"<h1>Welcome, {user.FirstName}!</h1>" +
+                                $"<p>Thank you for registering with us. Please confirm your email address by clicking the link below:</p>" +
+                                $"<p><a href='{confirmationLink}'>Confirm Email</a></p>" +
+                                $"<p>If you did not register, please ignore this email.</p>" +
+                                $"<p>Best regards,<br/>The Luxe Team</p>";
+
+                await _emailService.SendEmailAsync(user.Email, "Confirm Your Email", emailBody);
 
                 return new ApiResponse<TokenResponseDTO>
                 {
@@ -309,6 +326,8 @@ namespace luxe.Server.Infrastructure.Repositories
                 await _userRepository.RevokeRefreshTokenAsync(token);
             }
         }
+
+
 
         //private string GetIpAddress()
         //{
