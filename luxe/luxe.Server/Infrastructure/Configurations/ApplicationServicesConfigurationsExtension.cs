@@ -32,7 +32,10 @@ namespace luxe.Server.Infrastructure.Configurations
             {
                 throw new InvalidOperationException("jwt secret key is not configured properly");
             }
-    
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+            services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+            services.Configure<ClientSettings>(configuration.GetSection("ClientSettings"));
+
 
             services.AddIdentity<AppUser, AppRole>(options =>
             {
@@ -90,7 +93,7 @@ namespace luxe.Server.Infrastructure.Configurations
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<ISubcategoryRepository, SubcategoryRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+            services.AddScoped<IEmailService, EmailService>();
 
  
 
