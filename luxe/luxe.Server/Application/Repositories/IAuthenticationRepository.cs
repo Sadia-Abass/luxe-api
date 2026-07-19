@@ -10,5 +10,6 @@ namespace luxe.Server.Application.Repositories
         Task<ApiResponse<TokenResponseDTO>> LoginAsync(LoginRequestDTO loginRequestDto);
         Task<ApiResponse<TokenResponseDTO>> RefreshTokenAsync(TokenRequestDTO tokenRequestDto);
         Task<ApiResponse<string>> RevokeTokenAsync(RevokeTokenDTO revokeTokenDto);
+        Task<ApiResponse<string>> ConfirmEmail(string userId, string token);
     }
 }
