@@ -365,6 +365,48 @@ namespace luxe.Server.Infrastructure.Repositories
             };
         }
 
+        public async Task<ApiResponse<string>> ForgotPassword(ForgotPasswordDTO forgotPasswordDto)
+        {
+            var user = await _userManager.FindByIdAsync(forgotPasswordDto.Email);
+
+            // IMPORTANT: always return the same success response, whether or not the user exists.
+            if (user == null || !await _userManager.IsEmailConfirmedAsync(user))
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "If an account with that email exists, a reset link has been sent." },
+                    Data = null
+                };
+            }
+
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = Uri.EscapeDataString(resetToken);
+
+            var resetLink = $"{_clientSettings.BaseUrl}/reset-password?userId={user.Id}&token={encodedToken}";
+
+            var emailContent = $@"<h2>Password Reset Request</h2>
+                                <p>Hi {user.FirstName}, click the link below to reset your password:</p>
+                                <a href='{resetLink}'>Reset Password</a>
+                                <p>If you didn't request this, you can safely ignore this email — your password won't change.</p>";
+
+            await _emailService.SendEmailAsync(user.Email!, "Reset your password", emailContent);
+
+            return new ApiResponse<string>
+            {
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                ErrorMessages = new List<string> { "If an account with that email exists, a reset link has been sent." },
+                Data = null
+            };
+        }
+
+        public Task<ApiResponse<string>> ResetPassword(ResetPasswordDTO resetPasswordDto)
+        {
+            throw new NotImplementedException();
+        }
+
 
 
         //private string GetIpAddress()
