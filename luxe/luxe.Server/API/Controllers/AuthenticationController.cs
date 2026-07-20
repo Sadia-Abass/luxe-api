@@ -86,5 +86,16 @@ namespace luxe.Server.API.Controllers
             }
             return Ok(result);
         }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO resetPasswordDto)
+        {
+            var result = await _authenticationRepository.ResetPassword(resetPasswordDto);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
+        }
     }
 }
