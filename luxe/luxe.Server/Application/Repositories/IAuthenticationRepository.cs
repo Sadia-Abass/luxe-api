@@ -13,5 +13,6 @@ namespace luxe.Server.Application.Repositories
         Task<ApiResponse<string>> ConfirmEmail(string userId, string token);
         Task<ApiResponse<string>> ForgotPassword(ForgotPasswordDTO forgotPasswordDto);
         Task<ApiResponse<string>> ResetPassword(ResetPasswordDTO resetPasswordDto);
+        Task<ApiResponse<string>> ChangePassword(ChangePasswordDTO changePasswordDto);
     }
 }
