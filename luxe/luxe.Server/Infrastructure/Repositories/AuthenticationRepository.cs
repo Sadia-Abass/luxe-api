@@ -402,9 +402,43 @@ namespace luxe.Server.Infrastructure.Repositories
             };
         }
 
-        public Task<ApiResponse<string>> ResetPassword(ResetPasswordDTO resetPasswordDto)
+        public async Task<ApiResponse<string>> ResetPassword(ResetPasswordDTO resetPasswordDto)
         {
-            throw new NotImplementedException();
+            var user = await _userManager.FindByIdAsync(resetPasswordDto.UserId);
+            if(user == null)
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Invalid request." },
+                    Data = null
+                };
+            }
+
+            var decodedToken = Uri.UnescapeDataString(resetPasswordDto.Token);
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, resetPasswordDto.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    IsSuccess = false,
+                    ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                    Data = null
+                };
+            }
+
+            await RevokeAllUserTokenAsync(user.Id);
+
+            return new ApiResponse<string>
+            {
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                ErrorMessages = new List<string> { "Password reset successful. Please log in with your new password." },
+                Data = null
+            };
         }
 
 
