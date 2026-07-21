@@ -17,6 +17,7 @@ namespace luxe.Server.API.Controllers
         }
 
         [HttpPost("register")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> Register([FromForm] RegistrationRequestDTO registerRequestDto)
         {
             if (!ModelState.IsValid)
