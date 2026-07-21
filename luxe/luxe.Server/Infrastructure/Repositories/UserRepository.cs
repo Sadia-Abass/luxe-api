@@ -5,13 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : GenericRepository<AppUser>, IUserRepository
     {
-        private readonly AppDbContext _context;
-        public UserRepository(AppDbContext context)
-        {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-        }
+        //private readonly AppDbContext _context;
+        public UserRepository(AppDbContext context) : base(context) { }          
 
 
         public async Task<AppUser?> GetUserWithRefreshTokenAsync(string userId)

@@ -7,25 +7,25 @@ namespace luxe.Server.Infrastructure.Repositories
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-        protected readonly AppDbContext _appDbContext;
+        protected readonly AppDbContext _context;
         protected readonly DbSet<T> _dbSet;
 
         public GenericRepository(AppDbContext appDbContext)
         {
-            _appDbContext = appDbContext;
+            _context = appDbContext;
             _dbSet = appDbContext.Set<T>();
         }
 
         public async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
-            await _appDbContext.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
 
         public async Task RemoveAsync(T entity)
         {
             _dbSet.Remove(entity);
-            await _appDbContext.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
 
         public async Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> predicate)
@@ -52,7 +52,7 @@ namespace luxe.Server.Infrastructure.Repositories
         public async Task UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
-            await _appDbContext.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
 
 

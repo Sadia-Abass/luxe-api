@@ -2,7 +2,7 @@
 
 namespace luxe.Server.Application.Repositories
 {
-    public interface IUserRepository
+    public interface IUserRepository : IGenericRepository<AppUser>
     {
         Task<AppUser?> GetUserWithRefreshTokenAsync(string userId);
         Task<AppUser?> GetUserByRefreshTokenAsync(string refreshToken);
