@@ -53,9 +53,9 @@ namespace luxe.Server.Infrastructure.Repositories
                         Data = null
                     };
                 }
-
+      
                 var imageUrl = await _fileUploaderService.UploadFileAsync(registerRequestDto.File, "profile-images");
-
+                
                 var user = new AppUser
                 {
                     FirstName = registerRequestDto.FirstName,
@@ -137,11 +137,14 @@ namespace luxe.Server.Infrastructure.Repositories
 
             if (await _userManager.IsLockedOutAsync(user))
             {
+                var lockoutEnd = await _userManager.GetLockoutEndDateAsync(user);
+                var remainingLockoutTime = lockoutEnd.HasValue ? lockoutEnd.Value - DateTimeOffset.UtcNow : TimeSpan.Zero;
+
                 return new ApiResponse<TokenResponseDTO>
                 {
                     StatusCode = HttpStatusCode.Unauthorized,
                     IsSuccess = false,
-                    ErrorMessages = new List<string> { "User account is locked due to multiple failed attempts. Try again later." },
+                    ErrorMessages = new List<string> { $"User account is locked due to multiple failed attempts. Try again in {Math.Ceiling(remainingLockoutTime.TotalMinutes)} minutes." },
                     Data = null
                 };
             }
@@ -429,6 +432,9 @@ namespace luxe.Server.Infrastructure.Repositories
                     Data = null
                 };
             }
+
+            // A successful password reset proves identity via email - lift any active lockout
+            await _userManager.SetLockoutEndDateAsync(user, null);
 
             await RevokeAllUserTokenAsync(user.Id);
 
