@@ -269,8 +269,6 @@ namespace luxe.Server.Infrastructure.Repositories
         public async Task<ApiResponse<string>> RevokeTokenAsync(RevokeTokenDTO revokeTokenDto)
         {
             var storedRefreshToken = await _userRepository.GetRefreshTokenAsync(revokeTokenDto.RefreshToken);
-            var user = await _userManager.Users.Include(u => u.RefreshTokens).FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == storedRefreshToken.Token));
-
 
             if(storedRefreshToken == null)
             {
@@ -283,7 +281,7 @@ namespace luxe.Server.Infrastructure.Repositories
                 };
             }
 
-            var currentUserId = user?.Id;
+            var currentUserId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (storedRefreshToken.UserId != currentUserId)
             {
                 return new ApiResponse<string>
