@@ -24,8 +24,9 @@ namespace luxe.Server.Infrastructure.Repositories
         private readonly IFileUploaderService _fileUploaderService;
         private readonly IEmailService _emailService;
         private readonly ClientSettings _clientSettings;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IUserRepository userRepository, IFileUploaderService fileUploaderService, IEmailService emailService, IOptions<ClientSettings> clientSettings)
+        public AuthenticationRepository(AppDbContext appDbContext, UserManager<AppUser> userManager, ITokenService tokenService, IUserRepository userRepository, IFileUploaderService fileUploaderService, IEmailService emailService, IOptions<ClientSettings> clientSettings, IHttpContextAccessor httpContextAccessor)
         {
             _appDbContext = appDbContext;
             _userManager = userManager;      
@@ -34,6 +35,7 @@ namespace luxe.Server.Infrastructure.Repositories
             _fileUploaderService = fileUploaderService;
             _emailService = emailService;
             _clientSettings = clientSettings.Value;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ApiResponse<TokenResponseDTO>> RegisterAsync(RegistrationRequestDTO registerRequestDto)
@@ -437,6 +439,44 @@ namespace luxe.Server.Infrastructure.Repositories
                 StatusCode = HttpStatusCode.OK,
                 IsSuccess = true,
                 ErrorMessages = new List<string> { "Password reset successful. Please log in with your new password." },
+                Data = null
+            };
+        }
+
+        public async Task<ApiResponse<string>> ChangePassword(ChangePasswordDTO changePasswordDto)
+        {
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId!);
+
+            if(user == null)
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "You are not authorized to change this password." },
+                    Data = null
+                };
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
+
+            if(!result.Succeeded)
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    IsSuccess = false,
+                    ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                    Data = null
+                };
+            }
+
+            return new ApiResponse<string>
+            {
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                ErrorMessages = new List<string> { "Password changed successfully. Please log in again." },
                 Data = null
             };
         }
