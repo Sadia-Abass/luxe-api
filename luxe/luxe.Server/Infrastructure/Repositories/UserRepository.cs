@@ -1,17 +1,30 @@
 ﻿using luxe.Server.Application.DTOs;
 using luxe.Server.Application.DTOs.Users;
 using luxe.Server.Application.Repositories;
+using luxe.Server.Application.Services;
 using luxe.Server.Domain.Entities;
 using luxe.Server.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
     public class UserRepository : GenericRepository<AppUser>, IUserRepository
     {
         //private readonly AppDbContext _context;
-        public UserRepository(AppDbContext context) : base(context) { }          
+        private readonly IUserRepository _userRepository;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly IFileUploaderService _fileUploaderService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
+        public UserRepository(AppDbContext context, UserManager<AppUser> userManager, IUserRepository userRepository, IFileUploaderService fileUploaderService, IHttpContextAccessor httpContextAccessor) : base(context) 
+        {
+            _userManager = userManager;
+            _userRepository = userRepository;
+            _fileUploaderService = fileUploaderService;
+            _httpContextAccessor = httpContextAccessor;
+        }          
 
         public async Task<AppUser?> GetUserWithRefreshTokenAsync(string userId)
         {
@@ -91,6 +104,12 @@ namespace luxe.Server.Infrastructure.Repositories
         public Task<ApiResponse<string>> RemoveRole(string userId, string role)
         {
             throw new NotImplementedException();
+        }
+
+        private bool IsOwnerOrAdmin(string targetUserId)
+        {
+            var currentUserId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return currentUserId == targetUserId || _httpContextAccessor.HttpContext.User.IsInRole("Admin");
         }
     }
 }
