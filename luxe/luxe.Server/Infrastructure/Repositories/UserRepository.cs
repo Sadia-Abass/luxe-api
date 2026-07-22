@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Net;
+using System.Linq.Expressions;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
@@ -211,31 +212,312 @@ namespace luxe.Server.Infrastructure.Repositories
             }
         }
 
-        public Task<ApiResponse<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDto)
+        public async Task<ApiResponse<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDto)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (!IsOwnerOrAdmin(userId))
+                {
+                    return new ApiResponse<UserResponseDTO>
+                    {
+                        StatusCode = HttpStatusCode.Forbidden,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "You are not authorised to make this update." },
+                        Data = null
+                    };
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null) 
+                {
+                    return new ApiResponse<UserResponseDTO>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "User no found." },
+                        Data = null
+                    };
+                }
+
+                user.FirstName = updateUserDto.FirstName;
+                user.LastName = updateUserDto.LastName;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    return new ApiResponse<UserResponseDTO>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                        Data = null
+                    };
+                }
+
+                return new ApiResponse<UserResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { "User updated successfully."},
+                    Data = await MapToDto(user)
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<UserResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred during the update.", ex.Message },
+                    Data = null
+                };
+            }
+            
         }
 
-        public Task<ApiResponse<string>> UpdateProfileImageAsync(string userId, IFormFile file)
+        public async Task<ApiResponse<string>> UpdateProfileImageAsync(string userId, IFormFile file)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (!IsOwnerOrAdmin(userId)) 
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.Forbidden,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "You are not allow to update this profile image/" }
+                    };
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if(user == null)
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "User not found." },
+                        Data = null
+                    };
+                }
+
+                var newImageUrl = await _fileUploaderService.UploadFileAsync(file, "profile-images");
+
+                if (!string.IsNullOrEmpty(user.ImageUrl))
+                {
+                    var oldPublicId = ExtractPublicIdFromUrl(user.ImageUrl);
+                    if(oldPublicId != null)
+                    {
+                        await _fileUploaderService.DeleteFileAsync(oldPublicId);
+                    }
+                }
+
+                user.ImageUrl = newImageUrl.SecureUrl.ToString();
+                await _userManager.UpdateAsync(user);
+
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { "Profile image updated successfully."},
+                    Data = null
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<string>
+                {
+                   StatusCode = HttpStatusCode.InternalServerError,
+                   IsSuccess = false,
+                   ErrorMessages = new List<string> { "An error occurred during the update of profile image.", ex.Message },
+                   Data = null
+                };
+            }
         }
 
-        public Task<ApiResponse<string>> DeleteUserAsync(string userId)
+        public async Task<ApiResponse<string>> DeleteUserAsync(string userId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var currentUserId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if(currentUserId == null)
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "You cannot delete your own admin account." },
+                        Data = null
+                    };
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "User not found." },
+                        Data = null
+                    };
+                }
+
+                user.IsActive = false;
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded) 
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                        Data = null
+                    };
+                }
+
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { "User deleted successfully." },
+                    Data = null
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred during user account deletion.", ex.Message},
+                    Data = null
+                };
+            }
         }
 
-        public Task<ApiResponse<string>> AssignRole(string userId, AssignRoleDTO assignRoleDTO)
+        public async Task<ApiResponse<string>> AssignRole(string userId, AssignRoleDTO assignRoleDTO)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if(user == null)
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "User not found." },
+                        Data = null
+                    };
+                }
+
+                if (await _userManager.IsInRoleAsync(user, assignRoleDTO.Role))
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "This role is assigned to the user." },
+                        Data = null
+                    };
+                }
+
+                var result = await _userManager.AddToRoleAsync(user, assignRoleDTO.Role);
+                if (!result.Succeeded) 
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                        Data = null
+                    };
+                }
+
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { $"Role '{assignRoleDTO.Role}' assigned successfully." },
+                    Data = null
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred during role assignment.", ex.Message },
+                    Data = null
+                };
+            }
         }
 
-        public Task<ApiResponse<string>> RemoveRole(string userId, string role)
+        public async Task<ApiResponse<string>> RemoveRole(string userId, string role)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var currentUserId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (currentUserId == userId || role == "Admin")
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "You cannot remove your own Admin role." },
+                        Data = null
+                    };
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "User not found." },
+                        Data = null
+                    };
+                }
+
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    return new ApiResponse<string>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                        Data = null
+                    };
+                }
+
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { $"Role '{role}' removed successfully." },
+                    Data = null
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<string>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred during role removal.", ex.Message },
+                    Data = null
+                };
+            }
         }
 
+
+        // Method helpers
         private bool IsOwnerOrAdmin(string targetUserId)
         {
             var currentUserId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
