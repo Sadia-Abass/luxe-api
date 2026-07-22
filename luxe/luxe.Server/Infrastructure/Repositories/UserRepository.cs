@@ -7,6 +7,7 @@ using luxe.Server.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Net;
 
 namespace luxe.Server.Infrastructure.Repositories
 {
@@ -66,9 +67,28 @@ namespace luxe.Server.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber, int pageSize, string? search)
+        public async Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber = 1, int pageSize = 10, string? search = null)
         {
-            throw new NotImplementedException();
+            var (items, totalCount) = await _userRepository.GetPagedAsync(pageNumber, pageSize, filter: search == null ? null : u => u.Email!.Contains(search) || u.FirstName.Contains(search) || u.LastName.Contains(search));
+
+            var userDtos = new List<UserResponseDTO>();
+            foreach (var user in items)
+            {
+                userDtos.Add(await MapToDto(user));
+            }
+
+            return new ApiResponse<PagedResultDTO<UserResponseDTO>>
+            {
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                Data = new PagedResultDTO<UserResponseDTO>
+                {
+                    Items = userDtos,
+                    TotalCount = totalCount,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                }
+            };
         }
 
         public Task<ApiResponse<UserResponseDTO>> GetUserByIdAsync(string id)
@@ -110,6 +130,47 @@ namespace luxe.Server.Infrastructure.Repositories
         {
             var currentUserId = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
             return currentUserId == targetUserId || _httpContextAccessor.HttpContext.User.IsInRole("Admin");
+        }
+
+        private async Task<UserResponseDTO> MapToDto(AppUser user)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            return new UserResponseDTO
+            {
+                Id = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                DOB = user.DOB,
+                Email = user.Email ?? string.Empty,
+                ImageUrl = user.ImageUrl,
+                EmailConfirmed = user.EmailConfirmed,
+                Datejoined = user.Datejoined,
+                Roles = roles,
+                IsActive = user.IsActive,
+            };
+        }
+
+        private static string? ExtractPublicIdFromUrl(string url)
+        {
+            try
+            {
+                var uri = new Uri(url);
+                var segments = uri.AbsolutePath.Split('/');
+                var uploadIndex = Array.IndexOf(segments, "upload");
+                if(uploadIndex == -1)
+                {
+                    return null;
+                }
+
+                var publicIdParts = segments.Skip(uploadIndex + 2);
+                var publicIdWithExtension = string.Join("/", publicIdParts);
+
+                return publicIdWithExtension[..publicIdWithExtension.LastIndexOf('.')];
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
