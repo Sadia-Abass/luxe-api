@@ -1,4 +1,6 @@
-﻿using luxe.Server.Application.Repositories;
+﻿using luxe.Server.Application.DTOs;
+using luxe.Server.Application.DTOs.Users;
+using luxe.Server.Application.Repositories;
 using luxe.Server.Domain.Entities;
 using luxe.Server.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +53,44 @@ namespace luxe.Server.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-     
+        public Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber, int pageSize, string? search)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ApiResponse<UserResponseDTO>> GetUserByIdAsync(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ApiResponse<UserResponseDTO>> AddNewUser(AddUserDTO addUserDTO)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ApiResponse<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDto)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ApiResponse<string>> UpdateProfileImageAsync(string userId, IFormFile file)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ApiResponse<string>> DeleteUserAsync(string userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ApiResponse<string>> AssignRole(string userId, AssignRoleDTO assignRoleDTO)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ApiResponse<string>> RemoveRole(string userId, string role)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
