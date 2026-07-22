@@ -69,7 +69,7 @@ namespace luxe.Server.Infrastructure.Repositories
 
         public async Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber = 1, int pageSize = 10, string? search = null)
         {
-            var (items, totalCount) = await _userRepository.GetPagedAsync(pageNumber, pageSize, filter: search == null ? null : u => u.Email!.Contains(search) || u.FirstName.Contains(search) || u.LastName.Contains(search));
+            var (items, totalCount) = await base.GetPagedAsync(pageNumber, pageSize, filter: search == null ? null : u => u.Email!.Contains(search) || u.FirstName.Contains(search) || u.LastName.Contains(search));
 
             var userDtos = new List<UserResponseDTO>();
             foreach (var user in items)
@@ -91,9 +91,38 @@ namespace luxe.Server.Infrastructure.Repositories
             };
         }
 
-        public Task<ApiResponse<UserResponseDTO>> GetUserByIdAsync(string id)
+        public async Task<ApiResponse<UserResponseDTO>> GetUserByIdAsync(string id)
         {
-            throw new NotImplementedException();
+            if (!IsOwnerOrAdmin(id))
+            {
+                return new ApiResponse<UserResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.Forbidden,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "You are not authorised" },
+                    Data = null
+                };
+            }
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+            {
+                return new ApiResponse<UserResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.NotFound,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "User not found." },
+                    Data = null
+                };
+            }
+
+            return new ApiResponse<UserResponseDTO>
+            {
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                ErrorMessages = new List<string>(),
+                Data = await MapToDto(user)
+            };
         }
 
         public Task<ApiResponse<UserResponseDTO>> AddNewUser(AddUserDTO addUserDTO)
