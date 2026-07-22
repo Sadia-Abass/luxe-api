@@ -16,10 +16,10 @@ namespace luxe.Server.Application.Repositories
         Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber, int pageSize, string? search);
         Task<ApiResponse<UserResponseDTO>> GetUserByIdAsync(string id);
         Task<ApiResponse<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDto);
-        Task<ApiResponse<UserResponseDTO>> AddNewUser(AddUserDTO addUserDTO);
+        Task<ApiResponse<UserResponseDTO>> AddNewUserAsync(AddUserDTO addUserDTO);
         Task<ApiResponse<string>> UpdateProfileImageAsync(string userId, IFormFile file);
         Task<ApiResponse<string>> DeleteUserAsync(string userId);
-        Task<ApiResponse<string>> AssignRole(string userId, AssignRoleDTO assignRoleDTO);
-        Task<ApiResponse<string>> RemoveRole(string userId, string role);
+        Task<ApiResponse<string>> AssignRoleAsync(string userId, AssignRoleDTO assignRoleDTO);
+        Task<ApiResponse<string>> RemoveRoleAsync(string userId, string role);
     }
 }
