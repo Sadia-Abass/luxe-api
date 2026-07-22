@@ -68,7 +68,7 @@ namespace luxe.Server.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber = 1, int pageSize = 10, string? search = null)
+        public async Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber, int pageSize, string? search)
         {
             try
             {
@@ -152,7 +152,7 @@ namespace luxe.Server.Infrastructure.Repositories
             }
         }
 
-        public async Task<ApiResponse<UserResponseDTO>> AddNewUser(AddUserDTO addUserDTO)
+        public async Task<ApiResponse<UserResponseDTO>> AddNewUserAsync(AddUserDTO addUserDTO)
         {
             try
             {
@@ -397,7 +397,7 @@ namespace luxe.Server.Infrastructure.Repositories
             }
         }
 
-        public async Task<ApiResponse<string>> AssignRole(string userId, AssignRoleDTO assignRoleDTO)
+        public async Task<ApiResponse<string>> AssignRoleAsync(string userId, AssignRoleDTO assignRoleDTO)
         {
             try
             {
@@ -456,7 +456,7 @@ namespace luxe.Server.Infrastructure.Repositories
             }
         }
 
-        public async Task<ApiResponse<string>> RemoveRole(string userId, string role)
+        public async Task<ApiResponse<string>> RemoveRoleAsync(string userId, string role)
         {
             try
             {
