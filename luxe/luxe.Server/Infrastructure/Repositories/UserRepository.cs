@@ -69,65 +69,146 @@ namespace luxe.Server.Infrastructure.Repositories
 
         public async Task<ApiResponse<PagedResultDTO<UserResponseDTO>>> GetAllUsersAsync(int pageNumber = 1, int pageSize = 10, string? search = null)
         {
-            var (items, totalCount) = await base.GetPagedAsync(pageNumber, pageSize, filter: search == null ? null : u => u.Email!.Contains(search) || u.FirstName.Contains(search) || u.LastName.Contains(search));
-
-            var userDtos = new List<UserResponseDTO>();
-            foreach (var user in items)
+            try
             {
-                userDtos.Add(await MapToDto(user));
-            }
+                var (items, totalCount) = await base.GetPagedAsync(pageNumber, pageSize, filter: search == null ? null : u => u.Email!.Contains(search) || u.FirstName.Contains(search) || u.LastName.Contains(search));
 
-            return new ApiResponse<PagedResultDTO<UserResponseDTO>>
-            {
-                StatusCode = HttpStatusCode.OK,
-                IsSuccess = true,
-                Data = new PagedResultDTO<UserResponseDTO>
+                var userDtos = new List<UserResponseDTO>();
+                foreach (var user in items)
                 {
-                    Items = userDtos,
-                    TotalCount = totalCount,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize,
+                    userDtos.Add(await MapToDto(user));
                 }
-            };
+
+                return new ApiResponse<PagedResultDTO<UserResponseDTO>>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    Data = new PagedResultDTO<UserResponseDTO>
+                    {
+                        Items = userDtos,
+                        TotalCount = totalCount,
+                        PageNumber = pageNumber,
+                        PageSize = pageSize,
+                    }
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<PagedResultDTO<UserResponseDTO>>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred during registration.", ex.Message },
+                    Data = null
+                };
+            }
         }
 
         public async Task<ApiResponse<UserResponseDTO>> GetUserByIdAsync(string id)
         {
-            if (!IsOwnerOrAdmin(id))
+            try
+            {
+                if (!IsOwnerOrAdmin(id))
+                {
+                    return new ApiResponse<UserResponseDTO>
+                    {
+                        StatusCode = HttpStatusCode.Forbidden,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "You are not authorised" },
+                        Data = null
+                    };
+                }
+
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    return new ApiResponse<UserResponseDTO>
+                    {
+                        StatusCode = HttpStatusCode.NotFound,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "User not found." },
+                        Data = null
+                    };
+                }
+
+                return new ApiResponse<UserResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string>(),
+                    Data = await MapToDto(user)
+                };
+            }
+            catch (Exception ex) 
             {
                 return new ApiResponse<UserResponseDTO>
                 {
-                    StatusCode = HttpStatusCode.Forbidden,
+                    StatusCode = HttpStatusCode.InternalServerError,
                     IsSuccess = false,
-                    ErrorMessages = new List<string> { "You are not authorised" },
+                    ErrorMessages = new List<string> { "An error occurred during registration.", ex.Message },
                     Data = null
                 };
             }
-
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return new ApiResponse<UserResponseDTO>
-                {
-                    StatusCode = HttpStatusCode.NotFound,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { "User not found." },
-                    Data = null
-                };
-            }
-
-            return new ApiResponse<UserResponseDTO>
-            {
-                StatusCode = HttpStatusCode.OK,
-                IsSuccess = true,
-                ErrorMessages = new List<string>(),
-                Data = await MapToDto(user)
-            };
         }
 
-        public Task<ApiResponse<UserResponseDTO>> AddNewUser(AddUserDTO addUserDTO)
+        public async Task<ApiResponse<UserResponseDTO>> AddNewUser(AddUserDTO addUserDTO)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var existingUser = await _userManager.FindByEmailAsync(addUserDTO.Email);
+                if (existingUser != null) 
+                {
+                    return new ApiResponse<UserResponseDTO>
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessages = new List<string> { "A user with this email already exists." },
+                        Data = null
+                    };
+                }
+
+                var newUser = new AppUser
+                {
+                    FirstName = addUserDTO.FirstName,
+                    LastName = addUserDTO.LastName,
+                    Email = addUserDTO.Email,
+                    UserName = addUserDTO.UserName,
+                    DOB = addUserDTO.DOB,
+                    EmailConfirmed = true,
+                    Datejoined = DateTime.UtcNow,
+                    IsActive = true,
+                };
+
+                var result = await _userManager.CreateAsync(newUser, addUserDTO.Password);
+
+                if (!result.Succeeded) 
+                {
+                    return new ApiResponse<UserResponseDTO>
+                    {
+                        StatusCode = HttpStatusCode.BadGateway,
+                        IsSuccess = false,
+                        ErrorMessages = result.Errors.Select(e => e.Description).ToList(),
+                        Data = null
+                    };
+                }
+
+                return new ApiResponse<UserResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    ErrorMessages = new List<string> { "New user successfully registed."},
+                    Data = null
+                };
+            }
+            catch (Exception ex) 
+            {
+                return new ApiResponse<UserResponseDTO>
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "An error occurred during registration.", ex.Message }
+                };
+            }
         }
 
         public Task<ApiResponse<UserResponseDTO>> UpdateUserAsync(string userId, UpdateUserDTO updateUserDto)
